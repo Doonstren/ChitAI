@@ -318,7 +318,8 @@ class BookLoader:
             len(chunks), doc.title, total_stored,
         )
 
-        return {
+        # 6. Sync book card to Firestore (non-fatal) -------------------------
+        result_meta = {
             "book_id": book_id,
             "title": doc.title,
             "author": doc.author,
@@ -326,12 +327,24 @@ class BookLoader:
             "genres": book_metadata.get("genres", []),
             "tags": book_metadata.get("tags", []),
             "series": book_metadata.get("series", ""),
+            "series_number": book_metadata.get("series_number", ""),
             "publication_year": book_metadata.get("publication_year", ""),
             "publication_date": book_metadata.get("publication_date", ""),
+            "cover_url": book_metadata.get("cover_url", ""),
+            "language": book_metadata.get("language", ""),
             "license": book_metadata.get("license", ""),
             "rights_status": book_metadata.get("rights_status", ""),
             "source_url": book_metadata.get("source_url", ""),
             "num_chunks": len(chunks),
+        }
+        try:
+            from core.firestore_sync import sync_book_to_firestore
+            sync_book_to_firestore(result_meta)
+        except Exception as exc:
+            logger.warning("  ⚠ Firestore sync failed (non-fatal): %s", exc)
+
+        return {
+            **result_meta,
             "status": "success",
             "error": None,
         }

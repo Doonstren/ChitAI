@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── User profiles ──────────────────────────────────────
+    // Only the user themselves can read/write their profile
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Favorites sub-collection
+      match /favorites/{bookId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // ── Book catalog ───────────────────────────────────────
+    // Anyone can read; only backend (Admin SDK) can write
+    match /books/{bookId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── Comments / reviews ─────────────────────────────────
+    // Anyone can read; authenticated users can create;
+    // only the author can update/delete their own comment
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null
+                            && resource.data.userId == request.auth.uid;
+    }
+  }
+}

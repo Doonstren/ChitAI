@@ -39,6 +39,8 @@ package-lock.json
 # Firebase
 .firebase/
 firebase-debug.log
+firebase-service-account*.json
+serviceAccountKey*.json
 frontend/js/firebase-config.js
 
 # Logs
