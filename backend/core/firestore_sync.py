@@ -58,6 +58,7 @@ def sync_book_to_firestore(book_meta: Dict[str, Any]) -> None:
         return
 
     doc = {
+        "book_id": book_id,
         "title": book_meta.get("title", ""),
         "author": book_meta.get("author", ""),
         "description": book_meta.get("description", ""),
@@ -67,6 +68,7 @@ def sync_book_to_firestore(book_meta: Dict[str, Any]) -> None:
         "series": book_meta.get("series", ""),
         "series_number": book_meta.get("series_number", ""),
         "publication_year": book_meta.get("publication_year", ""),
+        "publication_date": book_meta.get("publication_date", book_meta.get("publication_year", "")),
         "cover_url": book_meta.get("cover_url", ""),
         "license": book_meta.get("license", ""),
         "rights_status": book_meta.get("rights_status", ""),

@@ -1,4 +1,5 @@
-import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from './firebase-config.js';
+import { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from './firebase-config.js';
+import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Змініть на домен Cloudflare, коли підключите його до Proxmox
 const BACKEND_URL = 'http://localhost:8000';
@@ -17,6 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnSend = document.getElementById("btn-send");
     const chatHistory = document.getElementById("chat-history");
     const chatSection = document.getElementById("chat-section");
+
+    // Елементи каталогу
+    const catalogSection = document.getElementById("catalog-section");
+    const catalogStatus = document.getElementById("catalog-status");
+    const catalogBooks = document.getElementById("catalog-books");
 
     // Елементи читалки
     const readerSection = document.getElementById("reader-section");
@@ -77,7 +83,12 @@ document.addEventListener("DOMContentLoaded", () => {
         showChat();
     });
 
-    chatHistory.addEventListener("click", (event) => {
+    chatHistory.addEventListener("click", handleBookReadClick);
+    catalogBooks.addEventListener("click", handleBookReadClick);
+
+    loadCatalog();
+
+    function handleBookReadClick(event) {
         const readButton = event.target.closest(".book-card-read");
         if (!readButton) return;
 
@@ -85,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!bookId) return;
 
         openReader(bookId);
-    });
+    }
 
     // Відправка повідомлення в чат
     btnSend.addEventListener("click", async () => {
@@ -127,30 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data.books && data.books.length > 0) {
                 let booksHtml = '<div class="book-recommendations">';
                 data.books.forEach(b => {
-                    const genres = Array.isArray(b.genres) ? b.genres.join(", ") : "";
-                    const publicationDate = b.publication_date || b.publication_year || "";
-                    const year = publicationDate ? `<span>${escapeHtml(publicationDate)}</span>` : "";
-                    const series = b.series ? `<span>${escapeHtml(b.series)}${b.series_number ? " #" + escapeHtml(b.series_number) : ""}</span>` : "";
-                    const cover = b.cover_url
-                        ? `<img class="book-card-cover" src="${escapeHtml(b.cover_url)}" alt="${escapeHtml(b.title)}">`
-                        : `<div class="book-card-cover book-card-cover--empty">📖</div>`;
-
-                    booksHtml += `
-                        <article class="book-card" data-book-id="${escapeHtml(b.book_id)}">
-                            ${cover}
-                            <div class="book-card-body">
-                                <h3>${escapeHtml(b.title)}</h3>
-                                <p class="book-card-author">${escapeHtml(b.author)}</p>
-                                <p class="book-card-description">${escapeHtml(b.description || "")}</p>
-                                <div class="book-card-meta">
-                                    ${genres ? `<span>${escapeHtml(genres)}</span>` : ""}
-                                    ${year}
-                                    ${series}
-                                </div>
-                                <button class="book-card-read" type="button" data-book-id="${escapeHtml(b.book_id)}">Читати</button>
-                            </div>
-                        </article>
-                    `;
+                    booksHtml += renderBookCard(b);
                 });
                 booksHtml += "</div>";
                 appendMessage("Рекомендації", booksHtml, true);
@@ -173,6 +161,60 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         chatHistory.appendChild(msgDiv);
         chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    async function loadCatalog() {
+        catalogStatus.textContent = "Завантаження каталогу...";
+        catalogBooks.innerHTML = "";
+
+        try {
+            const booksQuery = query(collection(db, "books"), orderBy("title"));
+            const snapshot = await getDocs(booksQuery);
+            const books = snapshot.docs.map(doc => ({
+                ...doc.data(),
+                book_id: doc.id,
+            }));
+
+            if (!books.length) {
+                catalogStatus.textContent = "Каталог поки порожній.";
+                return;
+            }
+
+            catalogBooks.innerHTML = books.map(renderBookCard).join("");
+            catalogStatus.textContent = `Книг у каталозі: ${books.length}`;
+        } catch (error) {
+            catalogStatus.textContent = "Не вдалося завантажити каталог.";
+            console.error(error);
+        }
+    }
+
+    function renderBookCard(book) {
+        const genres = Array.isArray(book.genres) ? book.genres.join(", ") : "";
+        const publicationDate = book.publication_date || book.publication_year || "";
+        const year = publicationDate ? `<span>${escapeHtml(publicationDate)}</span>` : "";
+        const series = book.series ? `<span>${escapeHtml(book.series)}${book.series_number ? " #" + escapeHtml(book.series_number) : ""}</span>` : "";
+        const title = book.title || "Книга";
+        const bookId = book.book_id || "";
+        const cover = book.cover_url
+            ? `<img class="book-card-cover" src="${escapeHtml(book.cover_url)}" alt="${escapeHtml(title)}">`
+            : `<div class="book-card-cover book-card-cover--empty">Без обкладинки</div>`;
+
+        return `
+            <article class="book-card" data-book-id="${escapeHtml(bookId)}">
+                ${cover}
+                <div class="book-card-body">
+                    <h3>${escapeHtml(title)}</h3>
+                    <p class="book-card-author">${escapeHtml(book.author || "")}</p>
+                    <p class="book-card-description">${escapeHtml(book.description || "")}</p>
+                    <div class="book-card-meta">
+                        ${genres ? `<span>${escapeHtml(genres)}</span>` : ""}
+                        ${year}
+                        ${series}
+                    </div>
+                    <button class="book-card-read" type="button" data-book-id="${escapeHtml(bookId)}">Читати</button>
+                </div>
+            </article>
+        `;
     }
 
     async function openReader(bookId) {
@@ -207,6 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function showReader() {
         chatSection.style.display = "none";
+        catalogSection.style.display = "none";
         readerSection.style.display = "block";
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -214,6 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function showChat() {
         readerSection.style.display = "none";
         chatSection.style.display = "block";
+        catalogSection.style.display = "block";
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
