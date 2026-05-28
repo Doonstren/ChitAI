@@ -1,0 +1,32 @@
+# Web framework
+fastapi==0.115.9
+python-multipart==0.0.9
+uvicorn[standard]==0.34.3
+
+# Google AI
+google-genai==1.16.1
+
+# Vector database
+numpy==2.1.3
+
+# Firebase Admin SDK
+firebase-admin==6.7.0
+
+# Environment variables
+python-dotenv==1.1.0
+
+# Rate limiting
+slowapi==0.1.9
+
+# Book parsing
+ebooklib==0.18
+beautifulsoup4==4.13.4
+PyPDF2==3.0.1
+chardet==5.2.0
+
+# Data validation
+pydantic==2.11.3
+pydantic-settings==2.9.1
+
+# CORS and HTTP
+httpx==0.28.1

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ЧитAI</title>
+    <style>
+        .book-recommendations {
+            display: grid;
+            gap: 14px;
+            margin-top: 10px;
+            max-width: 560px;
+        }
+
+        .book-card {
+            display: grid;
+            grid-template-columns: 92px minmax(0, 1fr);
+            gap: 14px;
+            padding: 14px;
+            border: 1px solid #d8d8d8;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .book-card-cover {
+            width: 92px;
+            aspect-ratio: 2 / 3;
+            border-radius: 6px;
+            object-fit: cover;
+            background: #f2f2f2;
+        }
+
+        .book-card-cover--empty {
+            display: grid;
+            place-items: center;
+            color: #777;
+            font-size: 26px;
+        }
+
+        .book-card h3 {
+            margin: 0 0 4px;
+            font-size: 18px;
+        }
+
+        .book-card-author {
+            margin: 0 0 8px;
+            color: #555;
+        }
+
+        .book-card-description {
+            margin: 0 0 10px;
+            line-height: 1.35;
+        }
+
+        .book-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .book-card-meta span {
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: #f1f1f1;
+        }
+
+        .book-card-read {
+            padding: 7px 12px;
+            border: 1px solid #111;
+            border-radius: 6px;
+            background: #111;
+            color: #fff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>ЧитAI</h1>
+    
+    <div id="auth-section">
+        <h2>Авторизація Firebase</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Пароль">
+        <button id="btn-login">Увійти</button>
+        <button id="btn-register">Зареєструватися</button>
+        <button id="btn-logout" style="display:none;">Вийти</button>
+        <p id="auth-status">Не авторизовано</p>
+    </div>
+
+    <hr>
+
+    <div id="chat-section">
+        <h2>Нейробібліотекар</h2>
+        <div id="chat-history" style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+            <!-- Сюди будуть додаватися повідомлення -->
+        </div>
+        <input type="text" id="chat-input" placeholder="Запитай щось про книги..." style="width: 70%;">
+        <button id="btn-send">Відправити</button>
+    </div>
+
+    <!-- Firebase SDK (Modular) -->
+    <script type="module" src="./js/firebase-config.js"></script>
+    <script type="module" src="./js/app.js"></script>
+</body>
+</html>

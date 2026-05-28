@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+env/
+
+# Environment
+.env
+*.env.local
+
+# ChromaDB persistent data
+backend/data/
+
+# Local documentation and planning notes
+docs/
+
+# Books (large/local/copyright-sensitive files)
+backend/books/
+backend/books_to_ingest/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+package-lock.json
+
+# Firebase
+.firebase/
+firebase-debug.log
+frontend/js/firebase-config.js
+
+# Logs
+*.log
