@@ -16,6 +16,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatInput = document.getElementById("chat-input");
     const btnSend = document.getElementById("btn-send");
     const chatHistory = document.getElementById("chat-history");
+    const chatSection = document.getElementById("chat-section");
+
+    // Елементи читалки
+    const readerSection = document.getElementById("reader-section");
+    const btnReaderBack = document.getElementById("btn-reader-back");
+    const readerTitle = document.getElementById("reader-title");
+    const readerAuthor = document.getElementById("reader-author");
+    const readerStatus = document.getElementById("reader-status");
+    const readerContent = document.getElementById("reader-content");
 
     let currentUser = null;
 
@@ -62,6 +71,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // Вихід
     btnLogout.addEventListener("click", async () => {
         await signOut(auth);
+    });
+
+    btnReaderBack.addEventListener("click", () => {
+        showChat();
+    });
+
+    chatHistory.addEventListener("click", (event) => {
+        const readButton = event.target.closest(".book-card-read");
+        if (!readButton) return;
+
+        const bookId = readButton.dataset.bookId;
+        if (!bookId) return;
+
+        openReader(bookId);
     });
 
     // Відправка повідомлення в чат
@@ -150,6 +173,48 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         chatHistory.appendChild(msgDiv);
         chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    async function openReader(bookId) {
+        showReader();
+        readerTitle.textContent = "Завантаження...";
+        readerAuthor.textContent = "";
+        readerStatus.textContent = "Завантажуємо текст книги...";
+        readerContent.textContent = "";
+
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/books/${encodeURIComponent(bookId)}/content`);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("Книгу не знайдено.");
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            readerTitle.textContent = data.title || "Книга";
+            readerAuthor.textContent = data.author ? `Автор: ${data.author}` : "";
+            readerStatus.textContent = "";
+            readerContent.textContent = data.content || "Текст книги порожній.";
+        } catch (error) {
+            readerTitle.textContent = "Не вдалося відкрити книгу";
+            readerAuthor.textContent = "";
+            readerStatus.textContent = error.message || "Спробуйте пізніше.";
+            readerContent.textContent = "";
+            console.error(error);
+        }
+    }
+
+    function showReader() {
+        chatSection.style.display = "none";
+        readerSection.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function showChat() {
+        readerSection.style.display = "none";
+        chatSection.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function escapeHtml(value) {

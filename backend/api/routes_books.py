@@ -69,6 +69,7 @@ class BookContentResponse(BaseModel):
     """Повний текст книги для читання."""
     book_id: str
     title: str
+    author: str = ""
     content: str
 
 
@@ -232,6 +233,7 @@ async def get_book_content(request: Request, book_id: str):
     return BookContentResponse(
         book_id=book_id,
         title=book.get("title", ""),
+        author=book.get("author", ""),
         content=content,
     )
 
