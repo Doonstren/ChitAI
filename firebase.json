@@ -8,6 +8,18 @@
     ],
     "rewrites": [
       {
+        "source": "/chat",
+        "destination": "/chat.html"
+      },
+      {
+        "source": "/profile",
+        "destination": "/profile.html"
+      },
+      {
+        "source": "/books/**",
+        "destination": "/book.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

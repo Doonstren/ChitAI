@@ -10,7 +10,7 @@ from typing import Optional
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
-from middleware.auth import optional_auth
+from middleware.auth import get_current_user
 from middleware.rate_limiter import limiter, CHAT_RATE_LIMIT
 
 logger = logging.getLogger(__name__)
@@ -84,12 +84,12 @@ class ChatResponse(BaseModel):
 async def chat(
     request: Request,         # required by slowapi
     body: ChatRequest = Body(...),
-    user: Optional[dict] = Depends(optional_auth),
+    user: dict = Depends(get_current_user),
 ):
     """
     Основний ендпоінт AI-чату.
 
-    - Авторизація необов'язкова (працює і без логіну).
+    - Авторизація обов'язкова.
     - Якщо `book_id` вказано — пошук лише по цій книзі.
     """
     # Lazy import щоб уникнути циклічних залежностей
