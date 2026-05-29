@@ -1,8 +1,8 @@
 import { db } from "./firebase-config.js";
 import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js?v=7";
-import { applyRatingStats, normalizeBook, renderBookCard } from "./common.js?v=7";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=7";
+import { initAuthUi } from "./auth-ui.js?v=8";
+import { applyRatingStats, normalizeBook, renderBookCard } from "./common.js?v=8";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=8";
 
 const catalogStatus = document.getElementById("catalog-status");
 const catalogBooks = document.getElementById("catalog-books");

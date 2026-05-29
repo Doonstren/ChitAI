@@ -18,33 +18,20 @@ export function initAuthUi(onUserChanged = () => {}) {
     const authStatus = document.getElementById("auth-status");
     const authSection = document.getElementById("auth-section");
 
-    if (localStorage.getItem("isLoggedIn") === "true") {
-        emailInput.style.display = "none";
-        passwordInput.style.display = "none";
-        nicknameInput.style.display = "none";
-        btnLogin.style.display = "none";
-        btnRegister.style.display = "none";
-        btnLogout.style.display = "inline-block";
-        authStatus.textContent = "Завантаження профілю...";
-    } else {
-        emailInput.style.display = "inline-block";
-        passwordInput.style.display = "inline-block";
-        nicknameInput.style.display = "inline-block";
-        btnLogin.style.display = "inline-block";
-        btnRegister.style.display = "inline-block";
-        btnLogout.style.display = "none";
-        authStatus.textContent = "Не авторизовано";
+    if (!emailInput || !passwordInput || !nicknameInput || !btnLogin || !btnRegister || !btnLogout || !authStatus || !authSection) {
+        return onAuthStateChanged(auth, onUserChanged);
     }
-    authSection.style.visibility = "visible";
 
-    btnRegister?.addEventListener("click", async () => {
+    showCachedAuthState();
+
+    btnRegister.addEventListener("click", async () => {
         const email = emailInput.value.trim();
         const password = passwordInput.value;
         const nickname = nicknameInput.value.trim();
         const normalizedNickname = nickname.toLowerCase();
 
         if (!nickname) {
-            alert("Введіть нікнейм!");
+            alert("Введіть нікнейм.");
             return;
         }
         if (nickname.length < 3) {
@@ -56,8 +43,10 @@ export function initAuthUi(onUserChanged = () => {}) {
             return;
         }
 
+        btnRegister.disabled = true;
+
         try {
-            authStatus.textContent = "Перевірка нікнейму...";
+            authStatus.textContent = "Перевірка нікнейма...";
             const usernameRef = doc(db, "usernames", normalizedNickname);
             const usernameDoc = await getDoc(usernameRef);
             if (usernameDoc.exists()) {
@@ -66,6 +55,9 @@ export function initAuthUi(onUserChanged = () => {}) {
 
             authStatus.textContent = "Створення акаунта...";
             const result = await createUserWithEmailAndPassword(auth, email, password);
+
+            authStatus.textContent = "Збереження профілю...";
+            await result.user.getIdToken(true);
 
             await runTransaction(db, async (transaction) => {
                 const currentUsernameDoc = await transaction.get(usernameRef);
@@ -83,22 +75,28 @@ export function initAuthUi(onUserChanged = () => {}) {
                 email: result.user.email,
                 displayName: nickname,
                 createdAt: serverTimestamp(),
+                lastLoginAt: serverTimestamp(),
             }, { merge: true });
+
+            localStorage.setItem("isLoggedIn", "true");
+            authStatus.textContent = `Авторизовано як: ${nickname}`;
         } catch (error) {
-            alert("Помилка: " + error.message);
+            alert("Помилка: " + getFriendlyAuthError(error));
             authStatus.textContent = "Помилка реєстрації";
+        } finally {
+            btnRegister.disabled = false;
         }
     });
 
-    btnLogin?.addEventListener("click", async () => {
+    btnLogin.addEventListener("click", async () => {
         try {
-            await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+            await signInWithEmailAndPassword(auth, emailInput.value.trim(), passwordInput.value);
         } catch (error) {
-            alert("Помилка: " + error.message);
+            alert("Помилка: " + getFriendlyAuthError(error));
         }
     });
 
-    btnLogout?.addEventListener("click", async () => {
+    btnLogout.addEventListener("click", async () => {
         await signOut(auth);
     });
 
@@ -138,6 +136,27 @@ export function initAuthUi(onUserChanged = () => {}) {
 
         onUserChanged(user);
     });
+
+    function showCachedAuthState() {
+        if (localStorage.getItem("isLoggedIn") === "true") {
+            emailInput.style.display = "none";
+            passwordInput.style.display = "none";
+            nicknameInput.style.display = "none";
+            btnLogin.style.display = "none";
+            btnRegister.style.display = "none";
+            btnLogout.style.display = "inline-block";
+            authStatus.textContent = "Завантаження профілю...";
+        } else {
+            emailInput.style.display = "inline-block";
+            passwordInput.style.display = "inline-block";
+            nicknameInput.style.display = "inline-block";
+            btnLogin.style.display = "inline-block";
+            btnRegister.style.display = "inline-block";
+            btnLogout.style.display = "none";
+            authStatus.textContent = "Не авторизовано";
+        }
+        authSection.style.visibility = "visible";
+    }
 }
 
 export function authPanelHtml() {
@@ -154,4 +173,13 @@ export function authPanelHtml() {
             <p id="auth-status">Завантаження...</p>
         </section>
     `;
+}
+
+function getFriendlyAuthError(error) {
+    if (error?.code === "auth/email-already-in-use") return "Цей email вже зареєстрований.";
+    if (error?.code === "auth/invalid-email") return "Некоректний email.";
+    if (error?.code === "auth/weak-password") return "Пароль має містити щонайменше 6 символів.";
+    if (error?.code === "auth/operation-not-allowed") return "У Firebase Authentication потрібно увімкнути Email/Password provider.";
+    if (error?.code === "permission-denied") return "Недостатньо прав для запису профілю. Перевірте Firestore Security Rules.";
+    return error?.message || "Невідома помилка.";
 }

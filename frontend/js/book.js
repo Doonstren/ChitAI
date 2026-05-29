@@ -1,4 +1,4 @@
-﻿import { db } from "./firebase-config.js";
+import { db } from "./firebase-config.js";
 import {
     addDoc,
     collection,
@@ -10,9 +10,9 @@ import {
     serverTimestamp,
     where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js?v=7";
-import { BACKEND_URL, escapeHtml, getBookIdFromLocation, renderStars } from "./common.js?v=7";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=7";
+import { initAuthUi } from "./auth-ui.js?v=8";
+import { BACKEND_URL, escapeHtml, getBookIdFromLocation, renderStars } from "./common.js?v=8";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=8";
 
 const bookStatus = document.getElementById("book-status");
 const bookDetail = document.getElementById("book-detail");

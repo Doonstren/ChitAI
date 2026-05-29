@@ -1,4 +1,4 @@
-﻿import { db } from "./firebase-config.js";
+import { db } from "./firebase-config.js";
 import {
     collection,
     deleteDoc,
@@ -9,9 +9,9 @@ import {
     query,
     where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js?v=7";
-import { applyRatingStats, escapeHtml, normalizeBook, renderBookCard } from "./common.js?v=7";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=7";
+import { initAuthUi } from "./auth-ui.js?v=8";
+import { applyRatingStats, escapeHtml, normalizeBook, renderBookCard } from "./common.js?v=8";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=8";
 
 const profileContent = document.getElementById("profile-content");
 const profileLoginNote = document.getElementById("profile-login-note");
