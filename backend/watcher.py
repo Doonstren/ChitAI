@@ -1,8 +1,9 @@
 import os
 import time
-import subprocess
 
-db_file = r"c:\Users\Doonstren\Documents\GitHub\digital-lib-v2.0\backend\data\chroma_db\numpy_db.pkl"
+from core.config import get_settings
+
+db_file = get_settings().numpy_db_abs_path / "numpy_db.pkl"
 
 print(f"Monitoring {db_file}...")
 

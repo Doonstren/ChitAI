@@ -35,7 +35,7 @@ class NumpyRetriever:
         
         # Determine storage path. The setting name is kept for backwards
         # compatibility with existing .env files.
-        storage_dir = Path(self._settings.chroma_db_abs_path)
+        storage_dir = Path(self._settings.numpy_db_abs_path)
         storage_dir.mkdir(parents=True, exist_ok=True)
         self._storage_file = storage_dir / "numpy_db.pkl"
         

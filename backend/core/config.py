@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -39,7 +39,9 @@ class Settings(BaseSettings):
     ]
 
     # ── Local NumPy vector DB ───────────────────────────────────────────
-    CHROMA_DB_PATH: str = "./data/chroma_db"
+    NUMPY_DB_PATH: str = "./data/numpy"
+    # Backward compatibility for old local .env files. Prefer NUMPY_DB_PATH.
+    CHROMA_DB_PATH: Optional[str] = None
 
     # ── RAG parameters ──────────────────────────────────────────────────
     CHUNK_SIZE: int = 1000
@@ -84,9 +86,14 @@ class Settings(BaseSettings):
         return v
 
     @property
-    def chroma_db_abs_path(self) -> Path:
+    def numpy_db_abs_path(self) -> Path:
         """Return an absolute, resolved path to the local vector DB directory."""
-        return Path(self.CHROMA_DB_PATH).resolve()
+        return Path(self.NUMPY_DB_PATH).resolve()
+
+    @property
+    def chroma_db_abs_path(self) -> Path:
+        """Deprecated alias kept so older helper scripts do not break immediately."""
+        return self.numpy_db_abs_path
 
 
 @lru_cache(maxsize=1)
