@@ -124,6 +124,9 @@ button:disabled {
     background: #111;
     color: #fff;
     text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-block;
+    text-align: center;
 }
 
 .secondary-button {
@@ -133,11 +136,42 @@ button:disabled {
     background: #fff;
     color: #111;
     text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-block;
+    text-align: center;
+}
+
+.primary-button:active,
+.secondary-button:active {
+    transform: scale(0.95);
+}
+
+.favorite-toggle {
+    min-width: 140px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .favorite-toggle[data-active="true"] {
     border-color: #d6336c;
     color: #d6336c;
+}
+
+.stars-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #f5c518;
+    font-size: 1.05em;
+}
+
+.stars-rating .rating-text {
+    color: #555;
+    margin-left: 4px;
+    font-size: 0.85em;
 }
 
 .book-page {

@@ -9,10 +9,11 @@ import {
     query,
     serverTimestamp,
     setDoc,
+    deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js";
-import { BACKEND_URL, escapeHtml, renderBookCard } from "./common.js";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js";
+import { initAuthUi } from "./auth-ui.js?v=6";
+import { BACKEND_URL, escapeHtml, renderBookCard } from "./common.js?v=6";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=6";
 
 const chatAuthNote = document.getElementById("chat-auth-note");
 const chatApp = document.getElementById("chat-app");
@@ -50,14 +51,33 @@ initAuthUi(async (user) => {
     }
 });
 
-btnNewThread.addEventListener("click", async () => {
-    await createThread();
+btnNewThread.addEventListener("click", () => {
+    currentThreadId = "";
+    currentMessages = [];
+    window.history.replaceState(null, "", `/chat`);
+    renderMessages();
 });
 
 threadList.addEventListener("click", async (event) => {
-    const button = event.target.closest(".chat-thread-open");
-    if (!button) return;
-    await openThread(button.dataset.threadId);
+    const deleteBtn = event.target.closest(".chat-thread-delete");
+    if (deleteBtn) {
+        if (confirm("Ви впевнені, що хочете видалити цей діалог?")) {
+            const threadId = deleteBtn.dataset.threadId;
+            await deleteDoc(doc(db, "users", currentUser.uid, "chatThreads", threadId));
+            if (currentThreadId === threadId) {
+                currentThreadId = "";
+                currentMessages = [];
+                window.history.replaceState(null, "", `/chat`);
+                renderMessages();
+            }
+            await loadThreads();
+        }
+        return;
+    }
+
+    const openBtn = event.target.closest(".chat-thread-open");
+    if (!openBtn) return;
+    await openThread(openBtn.dataset.threadId);
 });
 
 btnSend.addEventListener("click", sendMessage);
@@ -92,8 +112,9 @@ async function loadThreads() {
     }
 
     threadList.innerHTML = threads.map(thread => `
-        <article class="chat-thread">
-            <button class="chat-thread-open secondary-button" type="button" data-thread-id="${escapeHtml(thread.id)}">${escapeHtml(thread.title || "Розмова")}</button>
+        <article class="chat-thread" style="display: flex; gap: 8px;">
+            <button class="chat-thread-open secondary-button" style="flex:1; text-align: left;" type="button" data-thread-id="${escapeHtml(thread.id)}">${escapeHtml(thread.title || "Розмова")}</button>
+            <button class="chat-thread-delete secondary-button" type="button" data-thread-id="${escapeHtml(thread.id)}" title="Видалити">🗑️</button>
         </article>
     `).join("");
 }
@@ -107,8 +128,8 @@ async function createThread() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
     });
-    await openThread(ref.id);
-    await loadThreads();
+    currentThreadId = ref.id;
+    window.history.replaceState(null, "", `/chat?thread=${encodeURIComponent(currentThreadId)}`);
 }
 
 async function openThread(threadId) {

@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ЧитAI — нейробібліотекар</title>
-    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/main.css?v=6">
+    <meta name="robots" content="noindex, nofollow">
 </head>
 <body>
     <nav>
@@ -15,15 +16,16 @@
 
     <h1>Нейробібліотекар</h1>
 
-    <section id="auth-section" class="auth-section">
+    <section id="auth-section" class="auth-section" style="visibility: hidden; min-height: 40px;">
         <div class="auth-controls">
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Пароль">
-            <button id="btn-login" type="button">Увійти</button>
-            <button id="btn-register" type="button">Зареєструватися</button>
+            <input type="text" id="nickname" placeholder="Нікнейм (для реєстрації)" style="display:none;">
+            <input type="email" id="email" placeholder="Email" style="display:none;">
+            <input type="password" id="password" placeholder="Пароль" style="display:none;">
+            <button id="btn-login" type="button" style="display:none;">Увійти</button>
+            <button id="btn-register" type="button" style="display:none;">Зареєструватися</button>
             <button id="btn-logout" type="button" style="display:none;">Вийти</button>
         </div>
-        <p id="auth-status">Не авторизовано</p>
+        <p id="auth-status">Завантаження...</p>
     </section>
 
     <p id="chat-auth-note">Увійдіть, щоб писати нейробібліотекарю та зберігати історію розмов.</p>
@@ -45,7 +47,7 @@
         </section>
     </main>
 
-    <script type="module" src="/js/firebase-config.js"></script>
-    <script type="module" src="/js/chat.js"></script>
+    <script type="module" src="/js/firebase-config.js?v=6"></script>
+    <script type="module" src="/js/chat.js?v=6"></script>
 </body>
 </html>

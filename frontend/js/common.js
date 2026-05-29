@@ -39,18 +39,23 @@ export function renderBookCard(book, favoriteIds = new Set()) {
     const favoriteActive = favoriteIds.has(bookId) ? "true" : "false";
     const favoriteLabel = favoriteIds.has(bookId) ? "♥ У вибраному" : "♡ До вибраного";
 
+    const ratingCount = Number(book.ratingCount || 0);
+    const ratingSum = Number(book.ratingSum || 0);
+    const ratingHtml = renderStars(ratingCount > 0 ? ratingSum / ratingCount : 0, ratingCount);
+
     return `
         <article class="book-card" data-book-id="${escapeHtml(bookId)}">
             <a href="${bookUrl(bookId)}">${cover}</a>
             <div class="book-card-body">
                 <h3><a href="${bookUrl(bookId)}">${escapeHtml(title)}</a></h3>
                 <p class="book-card-author">${escapeHtml(book.author || "")}</p>
-                <p class="book-card-description">${escapeHtml(book.description || "")}</p>
                 <div class="book-card-meta">
                     ${genres ? `<span>${escapeHtml(genres)}</span>` : ""}
                     ${publicationDate ? `<span>${escapeHtml(publicationDate)}</span>` : ""}
                     ${series ? `<span>${escapeHtml(series)}</span>` : ""}
                 </div>
+                ${ratingHtml}
+                <p class="book-card-description">${escapeHtml(book.description || "")}</p>
                 <div class="card-actions">
                     <a class="primary-button" href="${bookUrl(bookId)}">Відкрити</a>
                     <button class="secondary-button favorite-toggle" type="button" data-book-id="${escapeHtml(bookId)}" data-active="${favoriteActive}">${favoriteLabel}</button>
@@ -58,6 +63,36 @@ export function renderBookCard(book, favoriteIds = new Set()) {
             </div>
         </article>
     `;
+}
+
+export function renderStars(average, count) {
+    if (count === 0) {
+        return `<div class="stars-rating">☆☆☆☆☆ <span class="rating-text">Оцінок поки немає</span></div>`;
+    }
+    const rounded = Math.max(0, Math.min(5, Math.round(average)));
+    const stars = "★".repeat(rounded) + "☆".repeat(5 - rounded);
+    const formattedAvg = average.toFixed(1);
+    const countText = count === 1 ? "1 відгук" : (count > 1 && count < 5) ? `${count} відгуки` : `${count} відгуків`;
+
+    return `<div class="stars-rating">${stars} <span class="rating-text">${formattedAvg} (${countText})</span></div>`;
+}
+
+export function applyRatingStats(books, comments) {
+    const statsByBook = new Map();
+    comments.forEach((comment) => {
+        const rating = Number(comment.rating || 0);
+        if (!comment.bookId || rating < 1 || rating > 5) return;
+
+        const stats = statsByBook.get(comment.bookId) || { ratingSum: 0, ratingCount: 0 };
+        stats.ratingSum += rating;
+        stats.ratingCount += 1;
+        statsByBook.set(comment.bookId, stats);
+    });
+
+    return books.map((book) => ({
+        ...book,
+        ...(statsByBook.get(book.book_id) || { ratingSum: 0, ratingCount: 0 }),
+    }));
 }
 
 export function normalizeBook(docSnapshot) {

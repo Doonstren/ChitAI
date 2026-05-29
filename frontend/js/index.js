@@ -1,8 +1,8 @@
 import { db } from "./firebase-config.js";
 import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js";
-import { normalizeBook, renderBookCard } from "./common.js";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js";
+import { initAuthUi } from "./auth-ui.js?v=6";
+import { applyRatingStats, normalizeBook, renderBookCard } from "./common.js?v=6";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=6";
 
 const catalogStatus = document.getElementById("catalog-status");
 const catalogBooks = document.getElementById("catalog-books");
@@ -36,8 +36,14 @@ async function loadCatalog() {
 
     try {
         const booksQuery = query(collection(db, "books"), orderBy("title"));
-        const snapshot = await getDocs(booksQuery);
-        cachedBooks = snapshot.docs.map(normalizeBook);
+        const [booksSnapshot, commentsSnapshot] = await Promise.all([
+            getDocs(booksQuery),
+            getDocs(collection(db, "comments")),
+        ]);
+        cachedBooks = applyRatingStats(
+            booksSnapshot.docs.map(normalizeBook),
+            commentsSnapshot.docs.map(item => item.data())
+        );
         renderCatalog();
     } catch (error) {
         catalogStatus.textContent = "Не вдалося завантажити каталог.";

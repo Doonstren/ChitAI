@@ -3,37 +3,49 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ── User profiles ──────────────────────────────────────
-    // Only the user themselves can read/write their profile
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
 
-      // Favorites sub-collection
       match /favorites/{bookId} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
 
-      // Private chat history for the authenticated user
       match /chatThreads/{threadId} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
     }
 
+    // ── Usernames (for unique nicknames) ───────────────────
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['uid', 'createdAt']);
+      allow update, delete: if false;
+    }
+
     // ── Book catalog ───────────────────────────────────────
-    // Anyone can read; only backend (Admin SDK) can write
     match /books/{bookId} {
       allow read: if true;
       allow write: if false;
     }
 
     // ── Comments / reviews ─────────────────────────────────
-    // Anyone can read; authenticated users can create;
-    // only the author can update/delete their own comment
     match /comments/{commentId} {
       allow read: if true;
       allow create: if request.auth != null
-                    && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null
-                            && resource.data.userId == request.auth.uid;
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['bookId', 'userId', 'userName', 'text', 'rating', 'createdAt'])
+                    && request.resource.data.rating is int
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 2000
+                    && request.resource.data.bookId is string;
+      allow update: if false;
+      allow delete: if request.auth != null
+                    && resource.data.userId == request.auth.uid;
     }
   }
 }
