@@ -1,11 +1,11 @@
 import { db } from "./firebase-config.js";
 import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js?v=6";
-import { applyRatingStats, normalizeBook, renderBookCard } from "./common.js?v=6";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=6";
+import { initAuthUi } from "./auth-ui.js?v=7";
+import { applyRatingStats, normalizeBook, renderBookCard } from "./common.js?v=7";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=7";
 
-const catalogStatus = document.getElementById("catalog-status");
-const catalogBooks = document.getElementById("catalog-books");
+const homeStatus = document.getElementById("home-status");
+const homeBooks = document.getElementById("home-books");
 
 let currentUser = null;
 let favoriteIds = new Set();
@@ -14,10 +14,10 @@ let cachedBooks = [];
 initAuthUi(async (user) => {
     currentUser = user;
     favoriteIds = await loadFavoriteIds(user);
-    renderCatalog();
+    renderHomeBooks();
 });
 
-catalogBooks.addEventListener("click", async (event) => {
+homeBooks.addEventListener("click", async (event) => {
     const button = event.target.closest(".favorite-toggle");
     if (!button) return;
 
@@ -28,11 +28,11 @@ catalogBooks.addEventListener("click", async (event) => {
     updateFavoriteButton(button, nextActive);
 });
 
-loadCatalog();
+loadHomeBooks();
 
-async function loadCatalog() {
-    catalogStatus.textContent = "Завантаження каталогу...";
-    catalogBooks.innerHTML = "";
+async function loadHomeBooks() {
+    homeStatus.textContent = "Завантаження книг...";
+    homeBooks.innerHTML = "";
 
     try {
         const booksQuery = query(collection(db, "books"), orderBy("title"));
@@ -40,24 +40,25 @@ async function loadCatalog() {
             getDocs(booksQuery),
             getDocs(collection(db, "comments")),
         ]);
+
         cachedBooks = applyRatingStats(
             booksSnapshot.docs.map(normalizeBook),
             commentsSnapshot.docs.map(item => item.data())
         );
-        renderCatalog();
+        renderHomeBooks();
     } catch (error) {
-        catalogStatus.textContent = "Не вдалося завантажити каталог.";
+        homeStatus.textContent = "Не вдалося завантажити книги.";
         console.error(error);
     }
 }
 
-function renderCatalog() {
+function renderHomeBooks() {
     if (!cachedBooks.length) {
-        catalogStatus.textContent = "Каталог поки порожній.";
-        catalogBooks.innerHTML = "";
+        homeStatus.textContent = "Каталог поки порожній.";
+        homeBooks.innerHTML = "";
         return;
     }
 
-    catalogStatus.textContent = `Книг у каталозі: ${cachedBooks.length}`;
-    catalogBooks.innerHTML = cachedBooks.map(book => renderBookCard(book, favoriteIds)).join("");
+    homeStatus.textContent = `Книг у каталозі: ${cachedBooks.length}`;
+    homeBooks.innerHTML = cachedBooks.map(book => renderBookCard(book, favoriteIds)).join("");
 }

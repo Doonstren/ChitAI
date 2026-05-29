@@ -1,4 +1,4 @@
-import { db } from "./firebase-config.js";
+﻿import { db } from "./firebase-config.js";
 import {
     addDoc,
     collection,
@@ -10,9 +10,9 @@ import {
     serverTimestamp,
     where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js?v=6";
-import { BACKEND_URL, escapeHtml, getBookIdFromLocation, renderStars } from "./common.js?v=6";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=6";
+import { initAuthUi } from "./auth-ui.js?v=7";
+import { BACKEND_URL, escapeHtml, getBookIdFromLocation, renderStars } from "./common.js?v=7";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=7";
 
 const bookStatus = document.getElementById("book-status");
 const bookDetail = document.getElementById("book-detail");
@@ -25,6 +25,7 @@ const commentForm = document.getElementById("comment-form");
 const commentLoginNote = document.getElementById("comment-login-note");
 const commentRating = document.getElementById("comment-rating");
 const commentText = document.getElementById("comment-text");
+const bookBreadcrumbCurrent = document.getElementById("book-breadcrumb-current");
 const bookId = getBookIdFromLocation();
 let currentUser = null;
 let currentBook = null;
@@ -143,6 +144,9 @@ async function loadBook() {
 
         currentBook = { ...snapshot.data(), book_id: snapshot.id };
         document.title = `${currentBook.title || "Книга"} — ЧитAI`;
+        if (bookBreadcrumbCurrent) {
+            bookBreadcrumbCurrent.textContent = currentBook.title || "Книга";
+        }
         bookStatus.textContent = "";
         renderBook(currentBook);
     } catch (error) {
@@ -164,19 +168,7 @@ function renderBook(book) {
     const ratingSum = Number(book.ratingSum || 0);
     const ratingHtml = renderStars(ratingCount > 0 ? ratingSum / ratingCount : 0, ratingCount);
 
-    // Breadcrumbs UI
-    const breadcrumbs = `
-        <nav class="breadcrumbs" aria-label="Breadcrumb" style="grid-column: 1 / -1;">
-            <ol style="list-style: none; padding: 0; display: flex; gap: 8px; font-size: 0.9em; color: #888; margin-bottom: 0px;">
-                <li><a href="/" style="color: #4CAF50; text-decoration: none;">Головна</a> /</li>
-                <li><a href="/" style="color: #4CAF50; text-decoration: none;">Книги</a> /</li>
-                <li aria-current="page">${escapeHtml(book.title || "Книга")}</li>
-            </ol>
-        </nav>
-    `;
-
     bookDetail.innerHTML = `
-        ${breadcrumbs}
         ${cover}
         <div>
             <h1 style="margin-top:0;">${escapeHtml(book.title || "Книга")}</h1>
@@ -216,8 +208,8 @@ function injectJsonLd(book) {
         },{
             "@type": "ListItem",
             "position": 2,
-            "name": "Книги",
-            "item": window.location.origin
+            "name": "Каталог",
+            "item": `${window.location.origin}/catalog`
         },{
             "@type": "ListItem",
             "position": 3,

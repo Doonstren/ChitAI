@@ -1,4 +1,4 @@
-import { auth, db } from "./firebase-config.js";
+﻿import { auth, db } from "./firebase-config.js";
 import {
     addDoc,
     collection,
@@ -11,9 +11,9 @@ import {
     setDoc,
     deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js?v=6";
-import { BACKEND_URL, escapeHtml, renderBookCard } from "./common.js?v=6";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=6";
+import { initAuthUi } from "./auth-ui.js?v=7";
+import { BACKEND_URL, escapeHtml, renderBookCard } from "./common.js?v=7";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=7";
 
 const chatAuthNote = document.getElementById("chat-auth-note");
 const chatApp = document.getElementById("chat-app");

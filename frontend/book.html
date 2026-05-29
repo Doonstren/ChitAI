@@ -4,13 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ЧитAI — книга</title>
-    <link rel="stylesheet" href="/css/main.css?v=6">
+    <link rel="stylesheet" href="/css/main.css?v=7">
 </head>
 <body>
-    <nav>
-        <a href="/">Каталог</a>
+    <nav class="site-nav">
+        <a href="/">Головна</a>
+        <a href="/catalog">Каталог</a>
+        <a href="/about">Про нас</a>
+        <a href="/help">Допомога</a>
+        <a href="/contacts">Контакти</a>
         <a href="/chat">Нейробібліотекар</a>
-        <a href="/profile">Профіль</a>
+        <a class="profile-link" href="/profile">Профіль</a>
+    </nav>
+
+    <nav class="breadcrumbs" aria-label="Хлібні крихти">
+        <a href="/">Головна</a>
+        <span>/</span>
+        <a href="/catalog">Каталог</a>
+        <span>/</span>
+        <span id="book-breadcrumb-current">Книга</span>
     </nav>
 
     <section id="auth-section" class="auth-section" style="visibility: hidden; min-height: 40px;">
@@ -59,7 +71,11 @@
         </section>
     </main>
 
-    <script type="module" src="/js/firebase-config.js?v=6"></script>
-    <script type="module" src="/js/book.js?v=6"></script>
+    <footer class="site-footer">
+        <p>ЧитAI — курсова робота студентів групи ММТЕ-11.</p>
+    </footer>
+
+    <script type="module" src="/js/firebase-config.js?v=7"></script>
+    <script type="module" src="/js/book.js?v=7"></script>
 </body>
 </html>

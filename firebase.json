@@ -19,6 +19,22 @@
     ],
     "rewrites": [
       {
+        "source": "/catalog",
+        "destination": "/catalog.html"
+      },
+      {
+        "source": "/about",
+        "destination": "/about.html"
+      },
+      {
+        "source": "/help",
+        "destination": "/help.html"
+      },
+      {
+        "source": "/contacts",
+        "destination": "/contacts.html"
+      },
+      {
         "source": "/chat",
         "destination": "/chat.html"
       },

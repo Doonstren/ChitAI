@@ -15,6 +15,36 @@ nav a {
     color: #111;
 }
 
+.site-nav {
+    align-items: center;
+}
+
+.profile-link {
+    padding: 6px 10px;
+    border: 1px solid #111;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.breadcrumbs {
+    gap: 8px;
+    margin-bottom: 16px;
+    color: #555;
+    font-size: 14px;
+}
+
+.breadcrumbs a {
+    color: #555;
+}
+
+.section-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 860px;
+}
+
 input,
 textarea,
 select,
@@ -53,6 +83,38 @@ button:disabled {
     display: grid;
     gap: 14px;
     max-width: 860px;
+}
+
+.home-book-row {
+    display: flex;
+    gap: 14px;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scroll-snap-type: x proximity;
+}
+
+.home-book-row .book-card {
+    flex: 0 0 min(420px, 86vw);
+    scroll-snap-align: start;
+}
+
+.catalog-layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.catalog-filters {
+    display: grid;
+    gap: 12px;
+    max-width: 240px;
+}
+
+.catalog-filters label {
+    display: grid;
+    gap: 5px;
 }
 
 .book-card {
@@ -230,6 +292,19 @@ button:disabled {
     display: none;
 }
 
+.static-page {
+    max-width: 760px;
+    line-height: 1.55;
+}
+
+.site-footer {
+    margin-top: 40px;
+    padding-top: 18px;
+    border-top: 1px solid #ddd;
+    color: #555;
+    font-size: 14px;
+}
+
 @media (max-width: 720px) {
     body {
         margin: 14px;
@@ -237,7 +312,12 @@ button:disabled {
 
     .book-card,
     .book-detail,
-    .chat-layout {
+    .chat-layout,
+    .catalog-layout {
         grid-template-columns: 1fr;
+    }
+
+    .catalog-filters {
+        max-width: none;
     }
 }

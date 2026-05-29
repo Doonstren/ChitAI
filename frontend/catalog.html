@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ЧитAI — головна</title>
+    <title>ЧитAI — каталог</title>
     <link rel="stylesheet" href="/css/main.css?v=7">
 </head>
 <body>
@@ -17,8 +17,13 @@
         <a class="profile-link" href="/profile">Профіль</a>
     </nav>
 
-    <h1>ЧитAI</h1>
-    <p>Електронна бібліотека з нейробібліотекарем, каталогом книг, відгуками та вибраним.</p>
+    <nav class="breadcrumbs" aria-label="Хлібні крихти">
+        <a href="/">Головна</a>
+        <span>/</span>
+        <span>Каталог</span>
+    </nav>
+
+    <h1>Каталог</h1>
 
     <section id="auth-section" class="auth-section" style="visibility: hidden; min-height: 40px;">
         <div class="auth-controls">
@@ -32,14 +37,31 @@
         <p id="auth-status">Завантаження...</p>
     </section>
 
-    <main>
+    <main class="catalog-layout">
+        <aside class="catalog-filters">
+            <h2>Фільтри</h2>
+            <label>
+                Пошук
+                <input type="search" id="catalog-search" placeholder="Назва або автор">
+            </label>
+            <label>
+                Жанр
+                <select id="genre-filter">
+                    <option value="">Усі жанри</option>
+                </select>
+            </label>
+            <label>
+                Автор
+                <select id="author-filter">
+                    <option value="">Усі автори</option>
+                </select>
+            </label>
+            <button id="reset-filters" type="button" class="secondary-button">Скинути</button>
+        </aside>
+
         <section>
-            <div class="section-heading">
-                <h2>Книги</h2>
-                <a href="/catalog">Увесь каталог</a>
-            </div>
-            <p id="home-status">Завантаження книг...</p>
-            <div id="home-books" class="home-book-row" aria-label="Горизонтальний список книг"></div>
+            <p id="catalog-status">Завантаження каталогу...</p>
+            <div id="catalog-books" class="catalog-books"></div>
         </section>
     </main>
 
@@ -48,6 +70,6 @@
     </footer>
 
     <script type="module" src="/js/firebase-config.js?v=7"></script>
-    <script type="module" src="/js/index.js?v=7"></script>
+    <script type="module" src="/js/catalog.js?v=7"></script>
 </body>
 </html>
