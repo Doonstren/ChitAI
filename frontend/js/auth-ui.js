@@ -6,6 +6,7 @@ import {
     onAuthStateChanged,
     signOut,
 } from "./firebase-config.js";
+import { updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { doc, serverTimestamp, setDoc, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 export function initAuthUi(onUserChanged = () => {}) {
@@ -17,6 +18,9 @@ export function initAuthUi(onUserChanged = () => {}) {
     const btnLogout = document.getElementById("btn-logout");
     const authStatus = document.getElementById("auth-status");
     const authSection = document.getElementById("auth-section");
+    let pendingRegistrationEmail = "";
+    let pendingRegistrationNickname = "";
+    let pendingProfileWrite = null;
 
     if (!emailInput || !passwordInput || !nicknameInput || !btnLogin || !btnRegister || !btnLogout || !authStatus || !authSection) {
         return onAuthStateChanged(auth, onUserChanged);
@@ -29,6 +33,8 @@ export function initAuthUi(onUserChanged = () => {}) {
         const password = passwordInput.value;
         const nickname = nicknameInput.value.trim();
         const normalizedNickname = nickname.toLowerCase();
+        pendingRegistrationEmail = email;
+        pendingRegistrationNickname = nickname;
 
         if (!nickname) {
             alert("Введіть нікнейм.");
@@ -57,9 +63,10 @@ export function initAuthUi(onUserChanged = () => {}) {
             const result = await createUserWithEmailAndPassword(auth, email, password);
 
             authStatus.textContent = "Збереження профілю...";
+            await updateProfile(result.user, { displayName: nickname });
             await result.user.getIdToken(true);
 
-            await runTransaction(db, async (transaction) => {
+            pendingProfileWrite = runTransaction(db, async (transaction) => {
                 const currentUsernameDoc = await transaction.get(usernameRef);
                 if (currentUsernameDoc.exists()) {
                     throw new Error("Цей нікнейм вже зайнятий.");
@@ -69,21 +76,24 @@ export function initAuthUi(onUserChanged = () => {}) {
                     uid: result.user.uid,
                     createdAt: serverTimestamp(),
                 });
-            });
-
-            await setDoc(doc(db, "users", result.user.uid), {
+            }).then(() => setDoc(doc(db, "users", result.user.uid), {
                 email: result.user.email,
                 displayName: nickname,
                 createdAt: serverTimestamp(),
                 lastLoginAt: serverTimestamp(),
-            }, { merge: true });
+            }, { merge: true }));
+
+            await pendingProfileWrite;
 
             localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("profileDisplayNameUid", result.user.uid);
+            localStorage.setItem("profileDisplayName", nickname);
             authStatus.textContent = `Авторизовано як: ${nickname}`;
         } catch (error) {
             alert("Помилка: " + getFriendlyAuthError(error));
             authStatus.textContent = "Помилка реєстрації";
         } finally {
+            pendingProfileWrite = null;
             btnRegister.disabled = false;
         }
     });
@@ -104,10 +114,18 @@ export function initAuthUi(onUserChanged = () => {}) {
         if (user) {
             localStorage.setItem("isLoggedIn", "true");
 
+            if (pendingProfileWrite && pendingRegistrationEmail === user.email) {
+                await pendingProfileWrite.catch(() => {});
+            }
+
             const userDoc = await getDoc(doc(db, "users", user.uid));
-            let displayName = user.email;
+            let displayName = user.displayName || user.email;
             if (userDoc.exists() && userDoc.data().displayName) {
                 displayName = userDoc.data().displayName;
+            } else if (pendingRegistrationEmail === user.email && pendingRegistrationNickname) {
+                displayName = pendingRegistrationNickname;
+            } else if (localStorage.getItem("profileDisplayNameUid") === user.uid && localStorage.getItem("profileDisplayName")) {
+                displayName = localStorage.getItem("profileDisplayName");
             }
             user.customDisplayName = displayName;
 
@@ -125,6 +143,8 @@ export function initAuthUi(onUserChanged = () => {}) {
             }, { merge: true });
         } else {
             localStorage.removeItem("isLoggedIn");
+            localStorage.removeItem("profileDisplayNameUid");
+            localStorage.removeItem("profileDisplayName");
             authStatus.textContent = "Не авторизовано";
             emailInput.style.display = "inline-block";
             passwordInput.style.display = "inline-block";

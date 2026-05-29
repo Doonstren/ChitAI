@@ -9,9 +9,9 @@ import {
     query,
     where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js?v=8";
-import { applyRatingStats, escapeHtml, normalizeBook, renderBookCard } from "./common.js?v=8";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=8";
+import { initAuthUi } from "./auth-ui.js?v=9";
+import { applyRatingStats, escapeHtml, normalizeBook, renderBookCard } from "./common.js?v=9";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=9";
 
 const profileContent = document.getElementById("profile-content");
 const profileLoginNote = document.getElementById("profile-login-note");
@@ -33,14 +33,32 @@ initAuthUi(async (user) => {
 
     if (!user) return;
 
-    // Fix displayName to match nickname
-    const displayName = currentUser.customDisplayName || currentUser.displayName || user.email;
+    profileEmail.textContent = "Завантаження профілю...";
+    const displayName = await resolveProfileDisplayName(user);
+    currentUser.customDisplayName = displayName;
     profileEmail.textContent = `Email: ${user.email} | Нікнейм: ${displayName}`;
 
     await loadProfileFavorites();
     await loadProfileThreads();
     await loadProfileReviews();
 });
+
+async function resolveProfileDisplayName(user) {
+    if (user.customDisplayName && user.customDisplayName !== user.email) {
+        return user.customDisplayName;
+    }
+
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (userDoc.exists() && userDoc.data().displayName) {
+        return userDoc.data().displayName;
+    }
+
+    if (user.displayName) {
+        return user.displayName;
+    }
+
+    return user.email;
+}
 
 favoriteBooks.addEventListener("click", async (event) => {
     const button = event.target.closest(".favorite-toggle");

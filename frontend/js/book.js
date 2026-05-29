@@ -10,9 +10,9 @@ import {
     serverTimestamp,
     where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js?v=8";
-import { BACKEND_URL, escapeHtml, getBookIdFromLocation, renderStars } from "./common.js?v=8";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=8";
+import { initAuthUi } from "./auth-ui.js?v=9";
+import { BACKEND_URL, escapeHtml, getBookIdFromLocation, renderStars } from "./common.js?v=9";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=9";
 
 const bookStatus = document.getElementById("book-status");
 const bookDetail = document.getElementById("book-detail");

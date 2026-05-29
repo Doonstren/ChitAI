@@ -11,9 +11,9 @@ import {
     setDoc,
     deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { initAuthUi } from "./auth-ui.js?v=8";
-import { BACKEND_URL, escapeHtml, renderBookCard } from "./common.js?v=8";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=8";
+import { initAuthUi } from "./auth-ui.js?v=9";
+import { BACKEND_URL, escapeHtml, renderBookCard } from "./common.js?v=9";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=9";
 
 const chatAuthNote = document.getElementById("chat-auth-note");
 const chatApp = document.getElementById("chat-app");
