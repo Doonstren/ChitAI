@@ -173,6 +173,7 @@ class RAGEngine:
         *,
         filters: Optional[Dict[str, Any]] = None,
         k: Optional[int] = None,
+        history: Optional[List[Dict[str, Any]]] = None,
     ) -> ChatResponse:
         """
         Run the full RAG pipeline for a user message.
@@ -202,8 +203,8 @@ class RAGEngine:
         )
         logger.info("Retrieved %d context items", len(chunks))
 
-        # 3. Build the full prompt
-        rag_prompt = build_rag_prompt(user_message, chunks)
+        # 3. Build the full prompt (with optional conversation history)
+        rag_prompt = build_rag_prompt(user_message, chunks, history=history)
 
         # 4. Generate via LLM (JSON mode)
         try:

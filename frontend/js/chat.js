@@ -164,6 +164,12 @@ async function sendMessage() {
     btnSend.disabled = true;
     chatStatus.textContent = "Нейробібліотекар відповідає...";
 
+    // Останні репліки цього треда — щоб бот пам'ятав контекст розмови.
+    const history = currentMessages
+        .filter(item => item.role === "user" || item.role === "assistant")
+        .slice(-8)
+        .map(item => ({ role: item.role, text: String(item.text || "").slice(0, 2000) }));
+
     currentMessages.push({ role: "user", text: message });
     renderMessages();
     await saveThread(message);
@@ -176,7 +182,7 @@ async function sendMessage() {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`,
             },
-            body: JSON.stringify({ message }),
+            body: JSON.stringify({ message, history }),
         });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);

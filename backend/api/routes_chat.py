@@ -22,6 +22,12 @@ router = APIRouter(prefix="/api", tags=["НейроЧат"])
 # Request / Response models
 # ---------------------------------------------------------------------------
 
+class ChatTurn(BaseModel):
+    """Одна репліка з історії розмови."""
+    role: str = Field(..., description="'user' або 'assistant'")
+    text: str = Field(default="", max_length=2000)
+
+
 class ChatRequest(BaseModel):
     """Тіло запиту до AI-чату."""
     message: str = Field(
@@ -33,6 +39,11 @@ class ChatRequest(BaseModel):
     book_id: Optional[str] = Field(
         default=None,
         description="ID книги для пошуку лише в ній (необов'язково)",
+    )
+    history: list[ChatTurn] = Field(
+        default_factory=list,
+        max_length=20,
+        description="Останні репліки розмови для контексту (необов'язково)",
     )
 
 
@@ -98,9 +109,15 @@ async def chat(
     try:
         engine = get_engine()
         filters = {"book_id": body.book_id} if body.book_id else None
+        history = [
+            {"role": turn.role, "text": turn.text}
+            for turn in body.history
+            if turn.role in ("user", "assistant") and turn.text
+        ]
         result_obj = engine.chat(
             user_message=body.message,
             filters=filters,
+            history=history,
         )
         
         # Перетворюємо ChatResponse об'єкт у словник

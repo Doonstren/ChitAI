@@ -82,9 +82,38 @@ def _format_meta_list(value: Any) -> str:
         return ", ".join(str(item) for item in value if str(item).strip())
     return str(value or "")
 
+def _build_history_block(history: List[Dict[str, Any]] | None) -> str:
+    """Render recent conversation turns as a context block (Ukrainian).
+
+    Only ``user``/``assistant`` text turns are used; the last 8 are kept and
+    each is truncated to keep the prompt compact.
+    """
+    if not history:
+        return ""
+
+    lines: list[str] = []
+    for turn in history[-8:]:
+        role = (turn.get("role") or "").strip()
+        text = (turn.get("text") or "").strip()
+        if not text:
+            continue
+        speaker = "Користувач" if role == "user" else "Бібліотекар"
+        lines.append(f"{speaker}: {text[:1500]}")
+
+    if not lines:
+        return ""
+
+    return (
+        "## Попередній контекст цієї розмови (для зв'язності відповіді):\n\n"
+        + "\n".join(lines)
+        + "\n\n---\n\n"
+    )
+
+
 def build_rag_prompt(
     query: str,
     chunks: List[Dict[str, Any]],
+    history: List[Dict[str, Any]] | None = None,
 ) -> str:
     """
     Assemble a full RAG prompt by injecting retrieved chunks as context.
@@ -93,6 +122,9 @@ def build_rag_prompt(
         query: The user's natural-language question / search query.
         chunks: List of dicts, each with at least ``text`` and optional
             metadata keys (``book_id``, ``title``, ``author``, ``chunk_index``).
+        history: Optional recent conversation turns
+            (``[{"role": "user"|"assistant", "text": str}, ...]``) so the
+            librarian can handle follow-up questions coherently.
 
     Returns:
         A single string ready to be sent to the LLM along with
@@ -134,7 +166,8 @@ def build_rag_prompt(
         f"## Контекст із бази даних:\n\n"
         f"{context_block}\n\n"
         f"---\n\n"
-        f"## Запит користувача:\n\n"
+        f"{_build_history_block(history)}"
+        f"## Поточний запит користувача:\n\n"
         f"{query}\n\n"
         f"Дай відповідь у JSON-форматі, як описано в системних інструкціях."
     )
