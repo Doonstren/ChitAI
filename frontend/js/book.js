@@ -51,9 +51,8 @@ bookDetail.addEventListener("click", async (event) => {
 
     const readButton = event.target.closest("#btn-read-book");
     if (readButton) {
-        // Відкриваємо сам файл книги у новій вкладці (читалка браузера),
-        // не підвантажуючи текст у сторінку.
-        window.open(`${BACKEND_URL}/api/books/${encodeURIComponent(bookId)}/file`, "_blank", "noopener");
+        // Відкриваємо вбудовану читалку (підтримує pdf, epub, fb2, txt).
+        window.open(`/reader?id=${encodeURIComponent(bookId)}`, "_blank", "noopener");
     }
 });
 

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Читалка — ЧитAI</title>
+
+    <!-- Reader libraries (classic scripts → expose globals before the module) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <style>
+        :root {
+            --bar-h: 54px;
+            --ink: #1f1b16;
+            --paper: #ffffff;
+            --bg: #f3f1ec;
+            --muted: #6b6258;
+            --line: #e3ddd2;
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; height: 100%; }
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .reader-bar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            height: var(--bar-h);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 18px;
+            background: var(--paper);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        }
+        .reader-bar a.back {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .reader-bar a.back:hover { color: var(--ink); }
+        .reader-bar .title {
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .reader-bar .nav { display: none; gap: 8px; }
+        .reader-bar .nav button {
+            border: 1px solid var(--line);
+            background: #fff;
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .reader-bar .nav button:hover { background: #f7f4ee; }
+
+        #viewer { width: 100%; }
+        .state {
+            text-align: center;
+            color: var(--muted);
+            padding: 64px 20px;
+            font-size: 15px;
+        }
+
+        /* Text-based formats (txt / fb2) */
+        .book-content {
+            max-width: 760px;
+            margin: 28px auto;
+            background: var(--paper);
+            padding: 56px 64px;
+            border-radius: 10px;
+            box-shadow: 0 2px 18px rgba(0,0,0,0.07);
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 19px;
+            line-height: 1.75;
+            color: #221d17;
+        }
+        .book-content h2.fb2-title { font-size: 24px; margin: 1.4em 0 0.7em; }
+        .book-content h3 { font-size: 20px; color: var(--muted); }
+        .book-content p { margin: 0 0 1em; text-align: justify; }
+        .book-content blockquote {
+            margin: 1em 0; padding-left: 18px;
+            border-left: 3px solid var(--line); color: #4a443c; font-style: italic;
+        }
+        .book-content .fb2-image { display: block; max-width: 100%; margin: 1.2em auto; border-radius: 4px; }
+        .book-content .fb2-poem { margin: 1em 0; padding-left: 12px; }
+        .book-content .fb2-v { line-height: 1.5; }
+        .book-content .fb2-author { text-align: right; color: var(--muted); font-style: italic; }
+        .book-content--txt pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: Georgia, serif;
+            font-size: 18px;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        /* PDF */
+        .pdf-pages { padding: 24px 12px 48px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+        .pdf-page { max-width: 100%; box-shadow: 0 2px 14px rgba(0,0,0,0.16); border-radius: 4px; background: #fff; }
+
+        /* EPUB */
+        #epub-area { width: 100%; height: calc(100vh - var(--bar-h)); background: var(--paper); }
+
+        @media (max-width: 600px) {
+            .book-content { padding: 32px 22px; margin: 14px auto; font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="reader-bar">
+        <a id="back-link" class="back" href="/catalog">← До книги</a>
+        <div id="reader-title" class="title">Читалка</div>
+        <div id="reader-nav" class="nav">
+            <button id="btn-prev" type="button">←</button>
+            <button id="btn-next" type="button">→</button>
+        </div>
+    </header>
+
+    <main id="viewer">
+        <p id="reader-state" class="state">Завантаження книги…</p>
+    </main>
+
+    <script type="module" src="/js/reader.js?v=1"></script>
+</body>
+</html>

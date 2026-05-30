@@ -47,6 +47,10 @@
         "destination": "/book.html"
       },
       {
+        "source": "/reader",
+        "destination": "/reader.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
