@@ -235,6 +235,17 @@ class BookLoader:
             book_id = book_metadata.get("book_id") or _slugify(doc.title)
         logger.info("  book_id = %s", book_id)
 
+        # 2b. Copy original file so it can be served for reading -------------
+        try:
+            import shutil
+            files_dir = Path(get_settings().BOOKS_FILES_DIR)
+            files_dir.mkdir(parents=True, exist_ok=True)
+            dest = files_dir / f"{book_id}{filepath.suffix.lower()}"
+            shutil.copy2(filepath, dest)
+            logger.info("  Copied book file → %s", dest)
+        except Exception as exc:
+            logger.warning("  Could not copy book file (non-fatal): %s", exc)
+
         # 3. Chunk -----------------------------------------------------------
         chunks: list[Chunk] = chunk_text(
             doc,

@@ -11,7 +11,9 @@ POST /api/books/ingest       — завантаження та індексац�
 
 import logging
 import os
+import re
 import tempfile
+from pathlib import Path
 from typing import Optional
 
 from fastapi import (
@@ -24,6 +26,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from middleware.auth import require_admin
@@ -235,6 +238,49 @@ async def get_book_content(request: Request, book_id: str):
         title=book.get("title", ""),
         author=book.get("author", ""),
         content=content,
+    )
+
+
+# ---------------------------------------------------------------------------
+# GET /api/books/{book_id}/file — оригінальний файл книги для читання
+# ---------------------------------------------------------------------------
+
+_FILE_MEDIA_TYPES = {
+    ".pdf": "application/pdf",
+    ".txt": "text/plain; charset=utf-8",
+    ".epub": "application/epub+zip",
+    ".fb2": "application/x-fictionbook+xml",
+}
+
+
+@router.get(
+    "/{book_id}/file",
+    summary="Файл книги для читання",
+    description="Повертає оригінальний файл книги (PDF тощо) для відкриття у читалці браузера.",
+)
+@limiter.limit(BOOKS_RATE_LIMIT)
+async def get_book_file(request: Request, book_id: str):
+    """Віддає оригінальний файл книги з папки на сервері. Авторизація не потрібна."""
+    from core.config import get_settings
+
+    # book_id — це slug; забороняємо будь-що інше, щоб уникнути обходу шляху.
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", book_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Книгу не знайдено.")
+
+    files_dir = Path(get_settings().BOOKS_FILES_DIR)
+    matches = sorted(files_dir.glob(f"{book_id}.*")) if files_dir.exists() else []
+    if not matches:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Файл книги відсутній на сервері.",
+        )
+
+    path = matches[0]
+    media_type = _FILE_MEDIA_TYPES.get(path.suffix.lower(), "application/octet-stream")
+    return FileResponse(
+        path,
+        media_type=media_type,
+        headers={"Content-Disposition": f'inline; filename="{path.name}"'},
     )
 
 

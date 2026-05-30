@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     # Backward compatibility for old local .env files. Prefer NUMPY_DB_PATH.
     CHROMA_DB_PATH: Optional[str] = None
 
+    # Folder with original book files served for reading (pdf/epub/fb2/txt).
+    # Files are copied here on ingestion, named by book_id.
+    BOOKS_FILES_DIR: str = "./data/books"
+
     # ── RAG parameters ──────────────────────────────────────────────────
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 150

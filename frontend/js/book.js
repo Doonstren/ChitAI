@@ -16,9 +16,6 @@ import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorit
 
 const bookStatus = document.getElementById("book-status");
 const bookDetail = document.getElementById("book-detail");
-const readerSection = document.getElementById("reader-section");
-const readerStatus = document.getElementById("reader-status");
-const readerContent = document.getElementById("reader-content");
 const commentsStatus = document.getElementById("comments-status");
 const commentsList = document.getElementById("comments-list");
 const commentForm = document.getElementById("comment-form");
@@ -54,7 +51,9 @@ bookDetail.addEventListener("click", async (event) => {
 
     const readButton = event.target.closest("#btn-read-book");
     if (readButton) {
-        loadContent();
+        // Відкриваємо сам файл книги у новій вкладці (читалка браузера),
+        // не підвантажуючи текст у сторінку.
+        window.open(`${BACKEND_URL}/api/books/${encodeURIComponent(bookId)}/file`, "_blank", "noopener");
     }
 });
 
@@ -179,6 +178,8 @@ function renderBook(book) {
             <p>${tags ? `<strong>Теги:</strong> ${escapeHtml(tags)}` : ""}</p>
             <p>${publicationDate ? `<strong>Дата виходу:</strong> ${escapeHtml(publicationDate)}` : ""}</p>
             <p>${book.series ? `<strong>Серія:</strong> ${escapeHtml(book.series)}${book.series_number ? " #" + escapeHtml(book.series_number) : ""}` : ""}</p>
+            <p>${book.license ? `<strong>Ліцензія:</strong> ${escapeHtml(book.license)}` : ""}</p>
+            <p>${book.source_url ? `<strong>Джерело:</strong> <a href="${escapeHtml(book.source_url)}" target="_blank" rel="noopener">${escapeHtml(book.source_url)}</a>` : ""}</p>
             <div class="card-actions" style="margin-top: 24px;">
                 <button id="btn-read-book" class="primary-button" type="button">Читати</button>
                 <button class="secondary-button favorite-toggle" type="button" data-book-id="${escapeHtml(book.book_id)}" data-active="${active ? "true" : "false"}">${active ? "♥ У вибраному" : "♡ До вибраного"}</button>
@@ -249,24 +250,6 @@ function injectJsonLd(book) {
     script2.type = "application/ld+json";
     script2.textContent = JSON.stringify(bookLd);
     document.head.appendChild(script2);
-}
-
-async function loadContent() {
-    readerSection.classList.remove("hidden");
-    readerStatus.textContent = "Завантаження тексту...";
-    readerContent.textContent = "";
-
-    try {
-        const response = await fetch(`${BACKEND_URL}/api/books/${encodeURIComponent(bookId)}/content`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const data = await response.json();
-        readerStatus.textContent = "";
-        readerContent.textContent = data.content || "Текст книги порожній.";
-    } catch (error) {
-        readerStatus.textContent = "Не вдалося завантажити текст. Бекенд має бути запущений.";
-        console.error(error);
-    }
 }
 
 async function loadComments() {
