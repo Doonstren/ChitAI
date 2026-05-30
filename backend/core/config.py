@@ -66,8 +66,8 @@ class Settings(BaseSettings):
         "gemini-3.1-flash-lite",
     ]
 
-    # Model used specifically for short chat-thread titles ("always Gemma").
-    TITLE_MODEL: str = "gemma-4-31b-it"
+    # Model used specifically for short chat-thread titles (lightweight).
+    TITLE_MODEL: str = "gemini-3.1-flash-lite"
 
     # ── Embedding model ─────────────────────────────────────────────────
     EMBEDDING_MODEL: str = "qwen3-embedding:4b-q4_K_M"

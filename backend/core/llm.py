@@ -194,9 +194,9 @@ class GeminiLLM:
         """
         Generate a very short (3–5 word) chat-thread title for *text*.
 
-        Uses a single fixed model (Gemma by default, ``TITLE_MODEL``) without
-        the fallback chain — titles are non-critical, so on any failure the
-        caller should fall back to a trimmed message.
+        Uses a single fixed model (``TITLE_MODEL``) without the fallback
+        chain — titles are non-critical, so on any failure the caller should
+        fall back to a trimmed message.
         """
         model_name = (
             model
@@ -204,8 +204,8 @@ class GeminiLLM:
             or (self._models[0] if self._models else "gemma-4-31b-it")
         )
 
-        # "Без роздумів" markedly reduces Gemma's hidden reasoning for this
-        # task (≈250 vs ≈740 thought tokens) and yields a clean title.
+        # "Без роздумів" discourages hidden reasoning (some models, e.g. Gemma,
+        # otherwise burn the token budget on it) and yields a clean title.
         prompt = (
             "Без роздумів одразу напиши коротку назву теми (3-5 слів, "
             f"українською) для повідомлення: «{text[:500]}»"
@@ -213,9 +213,9 @@ class GeminiLLM:
 
         if model_name in self._usage:
             self._wait_for_rate_limit(model_name)
-        # Gemma still "thinks" a little and ignores thinking_budget=0, so we
-        # give enough tokens for the reasoning + the final short title; the
-        # thought parts are skipped in _extract_text.
+        # Generous token budget so a model that still "thinks" has room for the
+        # reasoning + the final short title; thought parts are skipped in
+        # _extract_text.
         config = self._build_config(
             model_name, temperature=0.2, max_output_tokens=1000
         )
