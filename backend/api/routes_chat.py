@@ -170,3 +170,44 @@ async def chat(
         books=books,
         sources=sources,
     )
+
+
+# ---------------------------------------------------------------------------
+# Thread title generation
+# ---------------------------------------------------------------------------
+
+class TitleRequest(BaseModel):
+    """Тіло запиту для генерації заголовка чату."""
+    message: str = Field(..., min_length=1, max_length=2000)
+
+
+class TitleResponse(BaseModel):
+    title: str
+
+
+@router.post(
+    "/chat/title",
+    response_model=TitleResponse,
+    summary="Згенерувати короткий заголовок чату",
+    description="Повертає заголовок із 3–5 слів (модель Gemma) за першим повідомленням.",
+)
+@limiter.limit(CHAT_RATE_LIMIT)
+async def chat_title(
+    request: Request,
+    body: TitleRequest = Body(...),
+    user: dict = Depends(get_current_user),
+):
+    """Генерує короткий заголовок треда. Авторизація обов'язкова."""
+    from core.engine import get_engine
+
+    title = ""
+    try:
+        title = get_engine().make_title(body.message).strip()
+    except Exception as exc:
+        logger.warning("Не вдалося згенерувати заголовок: %s", exc)
+
+    if not title:
+        # Резервний варіант: обрізане перше повідомлення.
+        title = body.message.strip()[:40]
+
+    return TitleResponse(title=title)

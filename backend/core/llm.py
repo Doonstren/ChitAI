@@ -190,6 +190,58 @@ class GeminiLLM:
             + "\n".join(errors)
         )
 
+    def generate_title(self, text: str, *, model: Optional[str] = None) -> str:
+        """
+        Generate a very short (3–5 word) chat-thread title for *text*.
+
+        Uses a single fixed model (Gemma by default, ``TITLE_MODEL``) without
+        the fallback chain — titles are non-critical, so on any failure the
+        caller should fall back to a trimmed message.
+        """
+        model_name = (
+            model
+            or getattr(self._settings, "TITLE_MODEL", None)
+            or (self._models[0] if self._models else "gemma-4-31b-it")
+        )
+
+        # "Без роздумів" markedly reduces Gemma's hidden reasoning for this
+        # task (≈250 vs ≈740 thought tokens) and yields a clean title.
+        prompt = (
+            "Без роздумів одразу напиши коротку назву теми (3-5 слів, "
+            f"українською) для повідомлення: «{text[:500]}»"
+        )
+
+        if model_name in self._usage:
+            self._wait_for_rate_limit(model_name)
+        # Gemma still "thinks" a little and ignores thinking_budget=0, so we
+        # give enough tokens for the reasoning + the final short title; the
+        # thought parts are skipped in _extract_text.
+        config = self._build_config(
+            model_name, temperature=0.2, max_output_tokens=1000
+        )
+        response = self._client.models.generate_content(
+            model=model_name, contents=prompt, config=config
+        )
+        if model_name in self._usage:
+            self._record_request(model_name)
+
+        raw = self._extract_text(response).strip()
+        if not raw:
+            return ""
+
+        # The model may echo the "Заголовок:" template — keep what follows.
+        if "Заголовок:" in raw:
+            raw = raw.split("Заголовок:")[-1]
+
+        # First non-empty line, without list markers / quotes / trailing punctuation.
+        title = ""
+        for line in raw.splitlines():
+            cleaned = line.strip().lstrip("*-•").strip().strip("\"'«»").rstrip(" .!?:;").strip()
+            if cleaned:
+                title = cleaned
+                break
+        return title[:60]
+
     # ── Async variants ──────────────────────────────────────────────────
 
     async def agenerate(
@@ -270,14 +322,24 @@ class GeminiLLM:
     def _extract_text(response: Any) -> str:
         """Pull the generated text from a Gemini response object."""
         # response.text is a convenience property on the SDK response
-        if hasattr(response, "text") and response.text:
-            return response.text
+        try:
+            text = getattr(response, "text", None)
+        except Exception:
+            text = None
+        if text:
+            return text
 
-        # Fallback: iterate through candidates → parts
-        for candidate in getattr(response, "candidates", []):
-            for part in getattr(candidate, "content", {}).get("parts", []):
-                if "text" in part:
-                    return part["text"]
+        # Fallback: iterate through candidates → content.parts (pydantic objects).
+        # Skip "thought" parts — we want the actual answer, not the reasoning.
+        for candidate in getattr(response, "candidates", None) or []:
+            content = getattr(candidate, "content", None)
+            parts = getattr(content, "parts", None) or []
+            for part in parts:
+                if getattr(part, "thought", False):
+                    continue
+                part_text = getattr(part, "text", None)
+                if part_text:
+                    return part_text
 
         return ""
 

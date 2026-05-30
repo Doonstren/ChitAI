@@ -305,6 +305,12 @@ class RAGEngine:
             chunks_retrieved=len(chunks),
         )
 
+    # ── Chat-thread title ───────────────────────────────────────────────
+
+    def make_title(self, user_message: str) -> str:
+        """Generate a short chat-thread title via the Gemma model."""
+        return self._llm.generate_title(user_message)
+
     # ── Async variants ──────────────────────────────────────────────────
 
     async def achat(

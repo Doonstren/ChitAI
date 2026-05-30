@@ -27,6 +27,7 @@ const chatStatus = document.getElementById("chat-status");
 let currentUser = null;
 let currentThreadId = "";
 let currentMessages = [];
+let currentThreadTitle = "";
 let favoriteIds = new Set();
 
 initAuthUi(async (user) => {
@@ -37,6 +38,7 @@ initAuthUi(async (user) => {
     if (!user) {
         currentThreadId = "";
         currentMessages = [];
+        currentThreadTitle = "";
         favoriteIds = new Set();
         renderMessages();
         threadList.innerHTML = "";
@@ -54,6 +56,7 @@ initAuthUi(async (user) => {
 btnNewThread.addEventListener("click", () => {
     currentThreadId = "";
     currentMessages = [];
+    currentThreadTitle = "";
     window.history.replaceState(null, "", `/chat`);
     renderMessages();
 });
@@ -129,6 +132,7 @@ async function createThread() {
         updatedAt: serverTimestamp(),
     });
     currentThreadId = ref.id;
+    currentThreadTitle = "";
     window.history.replaceState(null, "", `/chat?thread=${encodeURIComponent(currentThreadId)}`);
 }
 
@@ -143,6 +147,7 @@ async function openThread(threadId) {
 
     currentThreadId = snapshot.id;
     currentMessages = snapshot.data().messages || [];
+    currentThreadTitle = snapshot.data().title || "";
     window.history.replaceState(null, "", `/chat?thread=${encodeURIComponent(currentThreadId)}`);
     renderMessages();
 }
@@ -165,10 +170,22 @@ async function sendMessage() {
     chatStatus.textContent = "Нейробібліотекар відповідає...";
 
     // Останні репліки цього треда — щоб бот пам'ятав контекст розмови.
+    // Для відповідей бота додаємо назви рекомендованих книг, інакше він
+    // не пам'ятає, що саме радив, і вигадує.
     const history = currentMessages
         .filter(item => item.role === "user" || item.role === "assistant")
         .slice(-8)
-        .map(item => ({ role: item.role, text: String(item.text || "").slice(0, 2000) }));
+        .map(item => {
+            let text = String(item.text || "");
+            if (item.role === "assistant" && Array.isArray(item.books) && item.books.length) {
+                const titles = item.books.map(book => book.title).filter(Boolean).join("; ");
+                if (titles) text += ` [Рекомендовані книги: ${titles}]`;
+            }
+            return { role: item.role, text: text.slice(0, 2000) };
+        });
+
+    // Перший обмін у треді → згенеруємо короткий заголовок після відповіді.
+    const isFirstExchange = !currentMessages.some(item => item.role === "assistant");
 
     currentMessages.push({ role: "user", text: message });
     renderMessages();
@@ -195,6 +212,9 @@ async function sendMessage() {
         });
         renderMessages();
         await saveThread(message);
+        if (isFirstExchange) {
+            await generateThreadTitle(message);
+        }
         await loadThreads();
         chatStatus.textContent = "";
     } catch (error) {
@@ -214,11 +234,38 @@ async function sendMessage() {
 async function saveThread(latestUserMessage) {
     if (!currentUser || !currentThreadId) return;
 
+    const fallbackTitle = currentMessages.find(item => item.role === "user")?.text?.slice(0, 60) || latestUserMessage.slice(0, 60);
     await setDoc(doc(db, "users", currentUser.uid, "chatThreads", currentThreadId), {
-        title: currentMessages.find(item => item.role === "user")?.text?.slice(0, 60) || latestUserMessage.slice(0, 60),
+        title: currentThreadTitle || fallbackTitle,
         messages: currentMessages,
         updatedAt: serverTimestamp(),
     }, { merge: true });
+}
+
+async function generateThreadTitle(firstMessage) {
+    if (!currentUser || !currentThreadId) return;
+    try {
+        const token = await auth.currentUser.getIdToken();
+        const response = await fetch(`${BACKEND_URL}/api/chat/title`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({ message: firstMessage }),
+        });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const title = String(data.title || "").trim();
+        if (!title) return;
+
+        currentThreadTitle = title;
+        await setDoc(doc(db, "users", currentUser.uid, "chatThreads", currentThreadId), { title }, { merge: true });
+        await loadThreads();
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 function renderMessages() {
