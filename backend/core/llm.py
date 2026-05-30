@@ -324,8 +324,11 @@ class GeminiLLM:
             )
             time.sleep(sleep_for)
 
-        # ── RPD check (simple daily counter reset every 24h) ───────────
-        day_start = now - (now % 86400)
+        # ── RPD check (daily counter reset at UTC midnight) ────────────
+        # Use wall-clock time here: time.monotonic() is not epoch-based,
+        # so (now % 86400) would not represent a real day boundary.
+        wall_now = time.time()
+        day_start = wall_now - (wall_now % 86400)
         if usage.rpd_reset_day < day_start:
             usage.rpd_count = 0
             usage.rpd_reset_day = day_start

@@ -1,4 +1,4 @@
-export const BACKEND_URL = "http://localhost:8000";
+export const BACKEND_URL = "https://chitai.adun.cc";
 
 export function escapeHtml(value) {
     return String(value ?? "")
@@ -65,6 +65,14 @@ export function renderBookCard(book, favoriteIds = new Set()) {
     `;
 }
 
+export function pluralizeReviews(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return `${count} відгук`;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} відгуки`;
+    return `${count} відгуків`;
+}
+
 export function renderStars(average, count) {
     if (count === 0) {
         return `<div class="stars-rating">☆☆☆☆☆ <span class="rating-text">Оцінок поки немає</span></div>`;
@@ -72,7 +80,7 @@ export function renderStars(average, count) {
     const rounded = Math.max(0, Math.min(5, Math.round(average)));
     const stars = "★".repeat(rounded) + "☆".repeat(5 - rounded);
     const formattedAvg = average.toFixed(1);
-    const countText = count === 1 ? "1 відгук" : (count > 1 && count < 5) ? `${count} відгуки` : `${count} відгуків`;
+    const countText = pluralizeReviews(count);
 
     return `<div class="stars-rating">${stars} <span class="rating-text">${formattedAvg} (${countText})</span></div>`;
 }

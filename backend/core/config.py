@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -30,10 +30,19 @@ class Settings(BaseSettings):
     # ── Firebase ────────────────────────────────────────────────────────
     FIREBASE_SERVICE_ACCOUNT_PATH: str = "./firebase-service-account.json"
 
+    # ── Admin access (protected endpoints, e.g. POST /api/books/ingest) ──
+    # Comma-separated lists. If BOTH are empty, the ingest endpoint is fully
+    # locked (local ingest_folder.py still works — it bypasses the API).
+    ADMIN_EMAILS: Annotated[List[str], NoDecode] = []
+    ADMIN_UIDS: Annotated[List[str], NoDecode] = []
+
     # ── Server ──────────────────────────────────────────────────────────
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    CORS_ORIGINS: List[str] = [
+    # NoDecode: parse comma-separated env values via the validator below
+    # instead of pydantic-settings' default JSON decoding (which would crash
+    # on a plain "a,b" string).
+    CORS_ORIGINS: Annotated[List[str], NoDecode] = [
         "http://localhost:5500",
         "http://127.0.0.1:5500",
     ]
@@ -51,7 +60,7 @@ class Settings(BaseSettings):
     CHUNKS_PER_PROFILE_BOOK: int = 2
 
     # ── LLM model priority (comma-separated string in .env) ────────────
-    LLM_MODELS: List[str] = [
+    LLM_MODELS: Annotated[List[str], NoDecode] = [
         "gemini-3.5-flash",
         "gemma-4-31b-it",
         "gemini-3.1-flash-lite",
@@ -83,6 +92,14 @@ class Settings(BaseSettings):
         """Accept both a comma-separated string and a Python list."""
         if isinstance(v, str):
             return [m.strip() for m in v.split(",") if m.strip()]
+        return v
+
+    @field_validator("ADMIN_EMAILS", "ADMIN_UIDS", mode="before")
+    @classmethod
+    def _parse_admin_list(cls, v: str | List[str]) -> List[str]:
+        """Accept both a comma-separated string and a Python list."""
+        if isinstance(v, str):
+            return [item.strip() for item in v.split(",") if item.strip()]
         return v
 
     @property

@@ -26,7 +26,7 @@ from fastapi import (
 )
 from pydantic import BaseModel, Field
 
-from middleware.auth import get_current_user
+from middleware.auth import require_admin
 from middleware.rate_limiter import limiter, BOOKS_RATE_LIMIT, CHAT_RATE_LIMIT
 
 logger = logging.getLogger(__name__)
@@ -251,7 +251,7 @@ _ALLOWED_EXTENSIONS = {".txt", ".pdf", ".epub", ".fb2"}
     response_model=IngestResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Завантажити та індексувати книгу",
-    description="Приймає файл книги, парсить та додає до бази. Потрібна авторизація.",
+    description="Приймає файл книги, парсить та додає до бази. Лише для адміністраторів.",
 )
 @limiter.limit(CHAT_RATE_LIMIT)  # reuse stricter limit for admin action
 async def ingest_book(
@@ -272,12 +272,12 @@ async def ingest_book(
     license: Optional[str] = Form(default=None, description="Ліцензія показу книги"),
     rights_status: Optional[str] = Form(default=None, description="Статус прав"),
     source_url: Optional[str] = Form(default=None, description="Джерело / сторінка прав"),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_admin),
 ):
     """
     Завантажує та індексує нову книгу.
 
-    - Потрібна авторизація (Bearer-токен).
+    - Лише для адміністраторів (Bearer-токен + email/uid у списку адмінів).
     - Приймає файл через multipart/form-data.
     - Опціонально приймає title та author.
     """

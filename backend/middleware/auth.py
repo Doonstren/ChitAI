@@ -146,3 +146,33 @@ async def optional_auth(
         # Для публічних ендпоінтів невалідний токен == анонімний доступ
         logger.debug("Невалідний токен на публічному ендпоінті – продовжуємо анонімно")
         return None
+
+
+async def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    """
+    FastAPI-залежність для адмін-ендпоінтів (напр. завантаження книг).
+
+    Вимагає валідний токен + щоб користувач був у списку адмінів
+    (``ADMIN_EMAILS`` або ``ADMIN_UIDS`` у налаштуваннях).
+
+    Якщо обидва списки порожні — доступ заборонено всім (ендпоінт замкнено).
+    """
+    from core.config import get_settings  # lazy import
+
+    settings = get_settings()
+    admin_emails = {e.lower() for e in settings.ADMIN_EMAILS}
+    admin_uids = set(settings.ADMIN_UIDS)
+
+    uid = user.get("uid") or ""
+    email = (user.get("email") or "").lower()
+
+    if (admin_emails and email in admin_emails) or (admin_uids and uid in admin_uids):
+        return user
+
+    logger.warning(
+        "Відмова в адмін-доступі: uid=%s email=%s", uid, email or "—"
+    )
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Доступ дозволено лише адміністраторам.",
+    )
