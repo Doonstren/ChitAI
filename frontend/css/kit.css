@@ -172,6 +172,47 @@ textarea.field { resize: vertical; min-height: 120px; }
 @media (max-width: 1200px){ .grid { grid-template-columns: repeat(4,1fr);} }
 @media (max-width: 980px){ .grid { grid-template-columns: repeat(3,1fr);} }
 
+/* ---- Catalog --------------------------------------------------------- */
+.catalog-page { max-width: 1440px; padding-top: 24px; }
+.catalog-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.catalog-toolbar .h1 { margin: 0; }
+.catalog-status { margin: 6px 0 0; font: var(--t-small); color: var(--warm-gray); }
+.catalog-shell {
+  display: grid;
+  grid-template-columns: 215px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.catalog-filters {
+  width: 215px;
+  min-height: 620px;
+  background: var(--beige);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.catalog-filter-title { font: var(--t-h2); margin: 0 0 8px; }
+.catalog-filters .label { margin: 8px 0 0; }
+.catalog-filters .field { min-height: 35px; padding: 8px 14px; font: var(--t-small); }
+.catalog-filters .btn { margin-top: 14px; }
+.catalog-results { min-width: 0; }
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 218px);
+  justify-content: start;
+  gap: 28px 24px;
+  padding: 4px 0 12px;
+}
+
 /* ---- Misc ------------------------------------------------------------ */
 .sort-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
 .sort-btn { border: 0; background: var(--beige); color: var(--green-900); border-radius: var(--r-pill);
@@ -274,6 +315,7 @@ a.btn, a.logo, a.avatar { text-decoration: none; }
   .hdr-in { flex-wrap: wrap; }
   .hdr-sp { flex-basis: 100%; height: 0; }
   .hdr-search { flex: 1 1 320px; }
+  .catalog-toolbar { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 760px) {
@@ -291,4 +333,8 @@ a.btn, a.logo, a.avatar { text-decoration: none; }
   .hero-lede { min-height: 70px; margin: 8px 0 22px; font-size: 18px; line-height: 1.35; }
   .hero-search { width: 100%; }
   .page { padding: 20px 16px 0; }
+  .catalog-shell { grid-template-columns: 1fr; }
+  .catalog-filters { width: 100%; min-height: 0; }
+  .catalog-grid { grid-template-columns: repeat(auto-fill, 218px); justify-content: center; }
+  .sort-row { justify-content: flex-start; }
 }
