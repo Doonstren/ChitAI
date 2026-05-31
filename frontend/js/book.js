@@ -11,18 +11,26 @@ import {
     where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { initAuthUi } from "./auth-ui.js?v=9";
-import { BACKEND_URL, escapeHtml, getBookIdFromLocation, renderStars } from "./common.js?v=9";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=9";
+import { BACKEND_URL, applyRatingStats, bookUrl, escapeHtml, getBookIdFromLocation } from "./common.js?v=10";
+import { loadFavoriteIds, toggleFavorite } from "./favorites.js?v=9";
 
 const bookStatus = document.getElementById("book-status");
 const bookDetail = document.getElementById("book-detail");
+const relatedStatus = document.getElementById("related-status");
+const relatedBooks = document.getElementById("related-books");
+const commentsTitle = document.getElementById("comments-title");
 const commentsStatus = document.getElementById("comments-status");
 const commentsList = document.getElementById("comments-list");
 const commentForm = document.getElementById("comment-form");
 const commentLoginNote = document.getElementById("comment-login-note");
+const commentName = document.getElementById("comment-name");
 const commentRating = document.getElementById("comment-rating");
 const commentText = document.getElementById("comment-text");
+const commentStars = document.getElementById("comment-stars");
 const bookBreadcrumbCurrent = document.getElementById("book-breadcrumb-current");
+const loginLink = document.querySelector(".hdr-login");
+const registerLink = document.querySelector(".hdr-register");
+
 const bookId = getBookIdFromLocation();
 let currentUser = null;
 let currentBook = null;
@@ -31,29 +39,46 @@ let userCommentDocId = null;
 
 initAuthUi(async (user) => {
     currentUser = user;
+    updateHeaderAuth(user);
     favoriteIds = await loadFavoriteIds(user);
     commentForm.classList.toggle("hidden", !user);
     commentLoginNote.classList.toggle("hidden", Boolean(user));
+    if (user && commentName && !commentName.value) {
+        commentName.value = user.customDisplayName || user.displayName || "";
+    }
     if (currentBook) renderBook(currentBook);
+    if (currentBook) await loadRelatedBooks(currentBook);
     await loadComments();
 });
 
 bookDetail.addEventListener("click", async (event) => {
-    const favoriteButton = event.target.closest(".favorite-toggle");
-    if (favoriteButton) {
-        const active = favoriteButton.dataset.active === "true";
-        const nextActive = await toggleFavorite(currentUser, favoriteButton.dataset.bookId, active);
-        if (nextActive) favoriteIds.add(favoriteButton.dataset.bookId);
-        else favoriteIds.delete(favoriteButton.dataset.bookId);
-        updateFavoriteButton(favoriteButton, nextActive);
+    if (event.target.closest("#btn-read-book")) {
+        window.open(`/reader?id=${encodeURIComponent(bookId)}`, "_blank", "noopener");
         return;
     }
 
-    const readButton = event.target.closest("#btn-read-book");
-    if (readButton) {
-        // Відкриваємо вбудовану читалку (підтримує pdf, epub, fb2, txt).
-        window.open(`/reader?id=${encodeURIComponent(bookId)}`, "_blank", "noopener");
+    if (event.target.closest("#btn-download-book")) {
+        window.open(`${BACKEND_URL}/api/books/${encodeURIComponent(bookId)}/file`, "_blank", "noopener");
     }
+});
+
+relatedBooks.addEventListener("click", async (event) => {
+    const button = event.target.closest(".favorite-toggle");
+    if (!button) return;
+    event.preventDefault();
+
+    const active = button.dataset.active === "true";
+    const nextActive = await toggleFavorite(currentUser, button.dataset.bookId, active);
+    if (nextActive) favoriteIds.add(button.dataset.bookId);
+    else favoriteIds.delete(button.dataset.bookId);
+    setRelatedFavoriteButton(button, nextActive);
+});
+
+commentStars.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-rating]");
+    if (!button) return;
+    commentRating.value = button.dataset.rating;
+    renderStarInput(Number(commentRating.value));
 });
 
 commentForm.addEventListener("submit", async (event) => {
@@ -69,10 +94,13 @@ commentForm.addEventListener("submit", async (event) => {
     }
 
     const rating = Number(commentRating.value);
+    const displayName = commentName.value.trim()
+        || currentUser.customDisplayName
+        || currentUser.displayName
+        || currentUser.email
+        || "Користувач";
 
     try {
-        const displayName = currentUser.customDisplayName || currentUser.displayName || currentUser.email || "Користувач";
-
         await addDoc(collection(db, "comments"), {
             bookId,
             userId: currentUser.uid,
@@ -85,46 +113,28 @@ commentForm.addEventListener("submit", async (event) => {
         commentText.value = "";
         await loadComments();
     } catch (error) {
-        alert("Помилка при додаванні коментаря: " + error.message);
+        alert("Помилка при додаванні відгуку: " + error.message);
         console.error(error);
     }
 });
 
 commentsList.addEventListener("click", async (event) => {
     const deleteBtn = event.target.closest(".btn-delete-comment");
-    if (deleteBtn) {
-        const commentId = deleteBtn.dataset.id;
+    if (!deleteBtn) return;
 
-        if (confirm("Ви впевнені, що хочете видалити свій відгук?")) {
-            await deleteComment(commentId);
-        }
-        return;
-    }
-
-    const editBtn = event.target.closest(".btn-edit-comment");
-    if (editBtn) {
-        const commentId = editBtn.dataset.id;
-        const rating = Number(editBtn.dataset.rating);
-        const text = editBtn.dataset.text;
-
-        if (confirm("Відгук буде видалено, і ви зможете опублікувати його оновлену версію. Продовжити?")) {
-            await deleteComment(commentId);
-            commentText.value = text;
-            commentRating.value = rating;
-            commentForm.scrollIntoView({ behavior: 'smooth' });
-        }
+    if (confirm("Ви впевнені, що хочете видалити свій відгук?")) {
+        await deleteComment(deleteBtn.dataset.id);
     }
 });
 
-async function deleteComment(commentId) {
-    try {
-        await deleteDoc(doc(db, "comments", commentId));
-        await loadComments();
-    } catch (error) {
-        alert("Помилка видалення: " + error.message);
-    }
-}
+document.getElementById("related-prev")?.addEventListener("click", () => {
+    relatedBooks.scrollBy({ left: -460, behavior: "smooth" });
+});
+document.getElementById("related-next")?.addEventListener("click", () => {
+    relatedBooks.scrollBy({ left: 460, behavior: "smooth" });
+});
 
+renderStarInput(Number(commentRating.value || 5));
 loadBook();
 
 async function loadBook() {
@@ -142,11 +152,10 @@ async function loadBook() {
 
         currentBook = { ...snapshot.data(), book_id: snapshot.id };
         document.title = `${currentBook.title || "Книга"} — ЧитAI`;
-        if (bookBreadcrumbCurrent) {
-            bookBreadcrumbCurrent.textContent = currentBook.title || "Книга";
-        }
+        bookBreadcrumbCurrent.textContent = currentBook.title || "Книга";
         bookStatus.textContent = "";
         renderBook(currentBook);
+        await loadRelatedBooks(currentBook);
     } catch (error) {
         bookStatus.textContent = "Не вдалося завантажити книгу.";
         console.error(error);
@@ -154,107 +163,125 @@ async function loadBook() {
 }
 
 function renderBook(book) {
-    const genres = Array.isArray(book.genres) ? book.genres.join(", ") : "";
-    const tags = Array.isArray(book.tags) ? book.tags.join(", ") : "";
-    const publicationDate = book.publication_date || book.publication_year || "";
-    const cover = book.cover_url
-        ? `<img class="book-detail-cover" src="${escapeHtml(book.cover_url)}" alt="${escapeHtml(book.title)}">`
-        : `<div class="book-detail-cover book-card-cover--empty">Без обкладинки</div>`;
-    const active = favoriteIds.has(book.book_id);
-
+    const title = book.title || "Книга";
+    const genres = Array.isArray(book.genres) ? book.genres : [];
     const ratingCount = Number(book.ratingCount || 0);
     const ratingSum = Number(book.ratingSum || 0);
-    const ratingHtml = renderStars(ratingCount > 0 ? ratingSum / ratingCount : 0, ratingCount);
+    const average = ratingCount > 0 ? ratingSum / ratingCount : 0;
+    const ratingText = ratingCount > 0 ? `${average.toFixed(1)}/5 (${ratingCount} голосів)` : "Оцінок поки немає";
+    const publicationYear = book.publication_year || extractYear(book.publication_date) || "—";
+    const language = book.language || "—";
+    const publisher = book.publisher || "—";
+    const pageCount = book.page_count || book.pages || book.num_pages || "—";
+    const cover = book.cover_url
+        ? `<img class="book-hero-cover" src="${escapeHtml(book.cover_url)}" alt="${escapeHtml(title)}">`
+        : `<div class="book-hero-cover book-cover-empty">Без обкладинки</div>`;
 
     bookDetail.innerHTML = `
-        ${cover}
-        <div>
-            <h1 style="margin-top:0;">${escapeHtml(book.title || "Книга")}</h1>
-            <p><strong>Автори:</strong> ${escapeHtml(book.author || "")}</p>
-            ${ratingHtml}
-            <p style="margin-top: 16px;">${escapeHtml(book.description || "")}</p>
-            <p>${genres ? `<strong>Жанри:</strong> ${escapeHtml(genres)}` : ""}</p>
-            <p>${tags ? `<strong>Теги:</strong> ${escapeHtml(tags)}` : ""}</p>
-            <p>${publicationDate ? `<strong>Дата виходу:</strong> ${escapeHtml(publicationDate)}` : ""}</p>
-            <p>${book.series ? `<strong>Серія:</strong> ${escapeHtml(book.series)}${book.series_number ? " #" + escapeHtml(book.series_number) : ""}` : ""}</p>
-            <p>${book.license ? `<strong>Ліцензія:</strong> ${escapeHtml(book.license)}` : ""}</p>
-            <p>${book.source_url ? `<strong>Джерело:</strong> <a href="${escapeHtml(book.source_url)}" target="_blank" rel="noopener">${escapeHtml(book.source_url)}</a>` : ""}</p>
-            <div class="card-actions" style="margin-top: 24px;">
-                <button id="btn-read-book" class="primary-button" type="button">Читати</button>
-                <button class="secondary-button favorite-toggle" type="button" data-book-id="${escapeHtml(book.book_id)}" data-active="${active ? "true" : "false"}">${active ? "♥ У вибраному" : "♡ До вибраного"}</button>
+        <aside class="book-hero-media">
+            ${cover}
+            <div class="book-actions">
+                <button id="btn-read-book" class="btn btn-primary" type="button">Читати онлайн</button>
+                <button id="btn-download-book" class="btn btn-secondary" type="button">Завантажити PDF</button>
             </div>
-        </div>
+        </aside>
+        <section class="book-hero-info">
+            <h1 class="serif">${escapeHtml(title)}</h1>
+            ${bookRow("Автор:", book.author || "—")}
+            ${bookRow("Оцінка:", ratingText)}
+            <div class="book-info-row">
+                <strong>Жанр:</strong>
+                <div class="book-tags">${genres.map(genre => `<span class="tag">${escapeHtml(genre)}</span>`).join("") || "—"}</div>
+            </div>
+            ${bookRow("Видавництво:", publisher)}
+            ${bookRow("Рік видання:", publicationYear)}
+            ${bookRow("Мова видання:", language)}
+            ${bookRow("К-сть сторінок:", pageCount)}
+            <h2 class="serif">Анотація</h2>
+            <p class="book-description">${escapeHtml(book.description || "Анотація для цієї книги поки не додана.")}</p>
+        </section>
     `;
 
     injectJsonLd(book);
 }
 
-function injectJsonLd(book) {
-    let oldScript = document.getElementById("json-ld-book");
-    if (oldScript) oldScript.remove();
-    let oldBreadcrumbs = document.getElementById("json-ld-breadcrumbs");
-    if (oldBreadcrumbs) oldBreadcrumbs.remove();
-    const ratingCount = Number(book.ratingCount || 0);
-    const ratingSum = Number(book.ratingSum || 0);
+function bookRow(label, value) {
+    return `
+        <div class="book-info-row">
+            <strong>${label}</strong>
+            <span>${escapeHtml(value)}</span>
+        </div>
+    `;
+}
 
-    const breadcrumbsLd = {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [{
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Головна",
-            "item": window.location.origin
-        },{
-            "@type": "ListItem",
-            "position": 2,
-            "name": "Каталог",
-            "item": `${window.location.origin}/catalog`
-        },{
-            "@type": "ListItem",
-            "position": 3,
-            "name": book.title || "Книга"
-        }]
-    };
+async function loadRelatedBooks(book) {
+    try {
+        const [booksSnapshot, commentsSnapshot] = await Promise.all([
+            getDocs(collection(db, "books")),
+            getDocs(collection(db, "comments")),
+        ]);
+        const books = applyRatingStats(
+            booksSnapshot.docs.map(item => ({ ...item.data(), book_id: item.id })),
+            commentsSnapshot.docs.map(item => item.data())
+        );
+        const currentGenres = new Set(Array.isArray(book.genres) ? book.genres : []);
+        const related = books
+            .filter(item => item.book_id !== book.book_id)
+            .map(item => ({
+                ...item,
+                score: Array.isArray(item.genres) ? item.genres.filter(genre => currentGenres.has(genre)).length : 0,
+            }))
+            .sort((a, b) => b.score - a.score || String(a.title || "").localeCompare(String(b.title || ""), "uk"))
+            .slice(0, 12);
 
-    const bookLd = {
-        "@context": "https://schema.org",
-        "@type": "Book",
-        "name": book.title,
-        "author": {
-            "@type": "Person",
-            "name": book.author || "Невідомо"
-        },
-        "url": window.location.href,
-        "image": book.cover_url || undefined,
-        "description": book.description || undefined,
-    };
+        if (!related.length) {
+            relatedStatus.textContent = "Схожих книг поки немає.";
+            relatedBooks.innerHTML = "";
+            return;
+        }
 
-    if (ratingCount > 0) {
-        bookLd.aggregateRating = {
-            "@type": "AggregateRating",
-            "ratingValue": (ratingSum / ratingCount).toFixed(1),
-            "reviewCount": ratingCount
-        };
+        relatedStatus.textContent = "";
+        relatedBooks.innerHTML = related.map(renderRelatedCard).join("");
+    } catch (error) {
+        relatedStatus.textContent = "Не вдалося завантажити схожі книги.";
+        console.error(error);
     }
+}
 
-    const script1 = document.createElement("script");
-    script1.id = "json-ld-breadcrumbs";
-    script1.type = "application/ld+json";
-    script1.textContent = JSON.stringify(breadcrumbsLd);
-    document.head.appendChild(script1);
+function renderRelatedCard(book) {
+    const id = book.book_id || "";
+    const title = book.title || "Книга";
+    const author = book.author || "";
+    const genres = Array.isArray(book.genres) ? book.genres.slice(0, 4) : [];
+    const count = Number(book.ratingCount || 0);
+    const rating = count > 0 ? (Number(book.ratingSum || 0) / count).toFixed(1) : "—";
+    const fav = favoriteIds.has(id);
+    const cover = book.cover_url
+        ? `<a class="cover" href="${bookUrl(id)}" draggable="false" style="background-image:url('${escapeHtml(book.cover_url)}')"></a>`
+        : `<a class="cover" href="${bookUrl(id)}" draggable="false"><div class="cover-gen"><div class="ct serif">${escapeHtml(title)}</div><div class="ca">${escapeHtml(author)}</div></div></a>`;
 
-    const script2 = document.createElement("script");
-    script2.id = "json-ld-book";
-    script2.type = "application/ld+json";
-    script2.textContent = JSON.stringify(bookLd);
-    document.head.appendChild(script2);
+    return `
+        <article class="bcard" data-book-id="${escapeHtml(id)}">
+            ${cover}
+            <div class="titlerow">
+                <div class="ttl">${escapeHtml(title)}</div>
+                <button class="addbtn favorite-toggle" type="button" data-book-id="${escapeHtml(id)}" data-active="${fav}" title="${fav ? "У вибраному" : "До вибраного"}" style="${fav ? "color:var(--orange)" : ""}">
+                    <span class="material-symbols-outlined">${fav ? "check_circle" : "add_circle"}</span>
+                </button>
+            </div>
+            <div class="meta">
+                <div class="auth">${escapeHtml(author)}</div>
+                <span class="rate"><span class="material-symbols-outlined" style="color:var(--brown);font-variation-settings:'FILL' 1">star</span>${rating}</span>
+            </div>
+            <div class="tags">${genres.map(g => `<span class="tag">${escapeHtml(g)}</span>`).join("")}</div>
+            <div class="cta"><a class="btn btn-primary btn-block" draggable="false" href="${bookUrl(id)}">Детальніше</a></div>
+        </article>`;
 }
 
 async function loadComments() {
     if (!bookId) return;
 
-    commentsStatus.textContent = "Завантаження коментарів...";
+    commentsStatus.textContent = "Завантаження відгуків...";
     commentsList.innerHTML = "";
     userCommentDocId = null;
 
@@ -279,47 +306,177 @@ async function loadComments() {
             renderBook(currentBook);
         }
 
-        if (currentUser) {
-            const userComment = comments.find(c => c.userId === currentUser.uid);
-            if (userComment) {
-                userCommentDocId = userComment.id;
-                commentForm.style.display = "none";
-                const message = document.createElement("p");
-                message.id = "already-commented-note";
-                message.textContent = "Ви вже залишили відгук до цієї книги.";
-                if (!document.getElementById("already-commented-note")) {
-                    commentForm.parentNode.insertBefore(message, commentForm);
-                }
-            } else {
-                commentForm.style.display = "block";
-                const msg = document.getElementById("already-commented-note");
-                if (msg) msg.remove();
-            }
-        }
+        updateCommentFormState(comments);
+        commentsTitle.textContent = `Відгуки читачів (${comments.length})`;
 
         if (!comments.length) {
-            commentsStatus.textContent = "Коментарів поки немає.";
+            commentsStatus.textContent = "Відгуків поки немає.";
             return;
         }
 
-        commentsStatus.textContent = `Коментарів: ${comments.length}`;
-        commentsList.innerHTML = comments.map(comment => {
-            const isMine = currentUser && comment.userId === currentUser.uid;
-            return `
-            <article class="comment">
-                <strong>${escapeHtml(comment.userName || "Користувач")}</strong>
-                <span class="stars-rating" style="margin-left: 8px; color: #f5c518;">${"★".repeat(Number(comment.rating || 0))}${"☆".repeat(5 - Number(comment.rating || 0))}</span>
-                <p>${escapeHtml(comment.text || "")}</p>
-                ${isMine ? `
-                <div style="margin-top: 8px; display: flex; gap: 8px;">
-                    <button class="secondary-button btn-edit-comment" data-id="${escapeHtml(comment.id)}" data-rating="${comment.rating}" data-text="${escapeHtml(comment.text || "")}" style="font-size: 12px; padding: 4px 8px;">Редагувати</button>
-                    <button class="secondary-button btn-delete-comment" data-id="${escapeHtml(comment.id)}" data-rating="${comment.rating}" style="font-size: 12px; padding: 4px 8px;">Видалити</button>
-                </div>
-                ` : ""}
-            </article>
-        `}).join("");
+        commentsStatus.textContent = "";
+        commentsList.innerHTML = comments.map(renderComment).join("");
     } catch (error) {
-        commentsStatus.textContent = "Не вдалося завантажити коментарі.";
+        commentsStatus.textContent = "Не вдалося завантажити відгуки.";
         console.error(error);
     }
+}
+
+function updateCommentFormState(comments) {
+    document.getElementById("already-commented-note")?.remove();
+    if (!currentUser) return;
+
+    const userComment = comments.find(comment => comment.userId === currentUser.uid);
+    if (userComment) {
+        userCommentDocId = userComment.id;
+        commentForm.style.display = "none";
+        const message = document.createElement("p");
+        message.id = "already-commented-note";
+        message.className = "book-muted";
+        message.textContent = "Ви вже залишили відгук до цієї книги.";
+        commentForm.parentNode.insertBefore(message, commentForm);
+        return;
+    }
+
+    commentForm.style.display = "flex";
+}
+
+function renderComment(comment) {
+    const isMine = currentUser && comment.userId === currentUser.uid;
+    const rating = Number(comment.rating || 0);
+    const date = formatDate(comment.createdAt);
+
+    return `
+        <article class="review-card">
+            <header>
+                <div><strong>${escapeHtml(comment.userName || "Користувач")}</strong><span>пише:</span></div>
+                <time>${escapeHtml(date)}</time>
+            </header>
+            <p>${escapeHtml(comment.text || "")}</p>
+            <footer>
+                <strong>Оцінка:</strong>
+                <span class="review-stars">${renderStars(rating)}</span>
+                ${isMine ? `<button class="btn-delete-comment" type="button" data-id="${escapeHtml(comment.id)}">Видалити</button>` : ""}
+            </footer>
+        </article>
+    `;
+}
+
+async function deleteComment(commentId) {
+    try {
+        await deleteDoc(doc(db, "comments", commentId));
+        await loadComments();
+    } catch (error) {
+        alert("Помилка видалення: " + error.message);
+    }
+}
+
+function setRelatedFavoriteButton(button, active) {
+    button.dataset.active = active ? "true" : "false";
+    const icon = button.querySelector(".material-symbols-outlined");
+    if (icon) icon.textContent = active ? "check_circle" : "add_circle";
+    button.style.color = active ? "var(--orange)" : "";
+    button.title = active ? "У вибраному" : "До вибраного";
+}
+
+function renderStarInput(activeRating) {
+    [...commentStars.querySelectorAll("button")].forEach((button) => {
+        button.classList.toggle("active", Number(button.dataset.rating) <= activeRating);
+    });
+}
+
+function renderStars(rating) {
+    const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
+    return Array.from({ length: 5 }, (_, index) => (
+        `<span class="${index < safeRating ? "active" : ""}">★</span>`
+    )).join("");
+}
+
+function formatDate(timestamp) {
+    const date = timestamp?.toDate?.();
+    if (!date) return "";
+    return new Intl.DateTimeFormat("uk-UA", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    }).format(date);
+}
+
+function extractYear(value) {
+    const match = String(value || "").match(/\d{4}/);
+    return match ? match[0] : "";
+}
+
+function updateHeaderAuth(user) {
+    if (!loginLink || !registerLink) return;
+    if (user) {
+        loginLink.textContent = "Профіль";
+        registerLink.style.display = "none";
+    } else {
+        loginLink.textContent = "Вхід";
+        registerLink.textContent = "Реєстрація";
+        registerLink.href = "/profile";
+        registerLink.style.display = "";
+    }
+    loginLink.classList.remove("auth-link-pending");
+    registerLink.classList.remove("auth-link-pending");
+}
+
+function injectJsonLd(book) {
+    document.getElementById("json-ld-book")?.remove();
+    document.getElementById("json-ld-breadcrumbs")?.remove();
+
+    const ratingCount = Number(book.ratingCount || 0);
+    const ratingSum = Number(book.ratingSum || 0);
+    const breadcrumbsLd = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [{
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Головна",
+            "item": window.location.origin,
+        }, {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Каталог",
+            "item": `${window.location.origin}/catalog`,
+        }, {
+            "@type": "ListItem",
+            "position": 3,
+            "name": book.title || "Книга",
+        }],
+    };
+    const bookLd = {
+        "@context": "https://schema.org",
+        "@type": "Book",
+        "name": book.title,
+        "author": {
+            "@type": "Person",
+            "name": book.author || "Невідомо",
+        },
+        "url": window.location.href,
+        "image": book.cover_url || undefined,
+        "description": book.description || undefined,
+    };
+
+    if (ratingCount > 0) {
+        bookLd.aggregateRating = {
+            "@type": "AggregateRating",
+            "ratingValue": (ratingSum / ratingCount).toFixed(1),
+            "reviewCount": ratingCount,
+        };
+    }
+
+    const script1 = document.createElement("script");
+    script1.id = "json-ld-breadcrumbs";
+    script1.type = "application/ld+json";
+    script1.textContent = JSON.stringify(breadcrumbsLd);
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement("script");
+    script2.id = "json-ld-book";
+    script2.type = "application/ld+json";
+    script2.textContent = JSON.stringify(bookLd);
+    document.head.appendChild(script2);
 }

@@ -12,6 +12,7 @@ body {
 button { font-family: inherit; cursor: pointer; }
 input, textarea { font-family: inherit; }
 ::placeholder { color: var(--warm-gray); }
+.hidden { display: none !important; }
 
 /* ---- App shell ------------------------------------------------------- */
 .app { min-height: 100vh; display: flex; flex-direction: column; }
@@ -169,6 +170,152 @@ textarea.field { resize: vertical; min-height: 120px; }
 .panel p { font: var(--t-body); color: var(--green-800); margin: 0 0 10px; }
 .panel ul { margin: 0; padding-left: 20px; }
 .panel li { font: var(--t-body); color: var(--green-800); margin-bottom: 6px; }
+
+/* ---- Book detail page ----------------------------------------------- */
+.book-page { width: 1440px; max-width: 1440px; padding: 24px 16px 0; }
+.book-status,
+.book-muted,
+.small { font: var(--t-small); color: var(--warm-gray); margin: 0 0 12px; }
+.book-detail {
+  display: grid;
+  grid-template-columns: 334px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.book-hero-media { width: 334px; }
+.book-hero-cover {
+  width: 334px;
+  height: 501px;
+  display: block;
+  object-fit: cover;
+  background: var(--cream);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+}
+.book-cover-empty {
+  display: grid;
+  place-items: center;
+  color: var(--warm-gray);
+  font: var(--t-body);
+  text-align: center;
+}
+.book-actions {
+  display: grid;
+  grid-template-columns: 145px 166px;
+  gap: 23px;
+  margin-top: 16px;
+}
+.book-actions .btn { height: 35px; min-height: 35px; padding-inline: 16px; font: var(--t-body); }
+.book-hero-info { max-width: 812px; padding-top: 0; }
+.book-hero-info h1 {
+  font: var(--t-h2);
+  color: var(--green-900);
+  margin: 0 0 24px;
+  text-shadow: 0 0 2px rgba(0,0,0,.25);
+}
+.book-info-row {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px;
+  min-height: 19px;
+  margin-bottom: 8px;
+  font: var(--t-body);
+  color: var(--green-900);
+}
+.book-info-row strong { font: var(--t-h3); color: var(--green-900); }
+.book-info-row .book-tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 20px; }
+.book-hero-info h2 {
+  font: var(--t-h2);
+  color: var(--green-900);
+  margin: 32px 0 8px;
+}
+.book-description {
+  width: min(594px, 100%);
+  margin: 0;
+  font: var(--t-body);
+  line-height: 19px;
+  color: var(--green-900);
+}
+.related-section { margin-top: 32px; }
+.related-section .carousel-head { margin-bottom: 16px; }
+.related-section .carousel-head .h2 { color: #404040; }
+.book-comments { margin-top: 32px; width: 955px; max-width: 100%; }
+.book-comments .h2 { color: #404040; margin-bottom: 16px; }
+.review-form {
+  width: 955px;
+  max-width: 100%;
+  min-height: 311px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  border-radius: var(--r-card);
+  background: var(--beige);
+  box-shadow: none;
+}
+.review-form label { display: flex; flex-direction: column; gap: 8px; font: var(--t-h3); color: var(--green-800); }
+.review-form input,
+.review-form textarea {
+  width: 100%;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--cream);
+  box-shadow: var(--inset-lo);
+  color: var(--green-900);
+  font: var(--t-body);
+  outline: 0;
+  padding: 8px 16px;
+}
+.review-form input { height: 35px; }
+.review-form textarea { min-height: 107px; resize: vertical; }
+.review-form-bottom { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+.review-rating-label { font: var(--t-h3); color: var(--green-900); margin-right: 4px; }
+.star-input { display: flex; gap: 4px; }
+.star-input button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--warm-gray);
+  font: 400 24px/24px var(--font-body);
+}
+.star-input button.active { color: var(--orange); }
+.review-submit { min-width: 133px; height: 35px; margin-left: auto; }
+.comments-list { display: flex; flex-direction: column; gap: 24px; margin-top: 24px; }
+.review-card {
+  width: 955px;
+  max-width: 100%;
+  min-height: 236px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  border-radius: var(--r-card);
+  background: var(--beige);
+}
+.review-card header,
+.review-card footer { display: flex; align-items: center; gap: 8px; }
+.review-card header { justify-content: space-between; }
+.review-card header div { display: flex; gap: 4px; align-items: center; }
+.review-card strong { font: var(--t-h3); color: var(--green-900); }
+.review-card header span,
+.review-card p,
+.review-card footer { font: var(--t-body); color: var(--green-900); }
+.review-card time { font: var(--t-body); color: var(--warm-gray); }
+.review-card p { margin: 0; line-height: 19px; flex: 1; }
+.review-stars { display: inline-flex; gap: 4px; font: 400 24px/24px var(--font-body); }
+.review-stars span { color: var(--warm-gray); }
+.review-stars span.active { color: var(--orange); }
+.btn-delete-comment {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--danger);
+  padding: 0;
+  font: var(--t-body);
+  text-decoration: underline;
+}
 
 /* ---- Static pages ---------------------------------------------------- */
 .static-page { max-width: 1440px; padding: 24px 16px 0; }
@@ -470,6 +617,16 @@ a.btn, a.logo, a.avatar { text-decoration: none; }
   .catalog-body .app { min-width: 0; }
   .catalog-page { width: 100%; max-width: 100%; padding: 20px 16px 0; }
   .contacts-page { width: 100%; max-width: 100%; }
+  .book-page { width: 100%; max-width: 100%; }
+  .book-detail { grid-template-columns: 1fr; }
+  .book-hero-media,
+  .book-hero-cover { width: 100%; max-width: 334px; }
+  .book-hero-cover { height: auto; aspect-ratio: 334 / 501; }
+  .book-actions { grid-template-columns: 1fr; gap: 12px; max-width: 334px; }
+  .book-info-row { grid-template-columns: 1fr; gap: 4px; }
+  .book-comments { width: 100%; }
+  .review-form,
+  .review-card { width: 100%; min-height: 0; }
   .catalog-shell { grid-template-columns: 1fr; }
   .catalog-filters { width: 100%; min-height: 0; }
   .catalog-grid { grid-template-columns: repeat(auto-fill, 218px); justify-content: center; }

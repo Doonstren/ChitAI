@@ -5,72 +5,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ЧитAI — книга</title>
     <link rel="icon" type="image/svg+xml" href="/assets/Favicon.svg">
-    <link rel="stylesheet" href="/css/main.css?v=11">
+    <link rel="stylesheet" href="/css/tokens.css?v=2">
+    <link rel="stylesheet" href="/css/kit.css?v=18">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap">
 </head>
 <body>
-    <nav class="site-nav">
-        <a href="/">Головна</a>
-        <a href="/catalog">Каталог</a>
-        <a href="/about">Про нас</a>
-        <a href="/help">Допомога</a>
-        <a href="/contacts">Контакти</a>
-        <a href="/chat">Нейробібліотекар</a>
-        <a class="profile-link" href="/profile">Профіль</a>
-    </nav>
+    <div class="app">
+        <header class="hdr">
+            <div class="hdr-in">
+                <a class="logo" href="/">ЧитAI</a>
+                <nav class="nav" aria-label="Головна навігація">
+                    <a href="/">Головна</a>
+                    <a href="/catalog">Каталог</a>
+                    <a href="/about">Про нас</a>
+                    <a href="/help">Допомога</a>
+                    <a href="/contacts">Контакти</a>
+                </nav>
+                <div class="hdr-sp"></div>
+                <a class="btn btn-primary hdr-ai" href="/chat">ЧитAI</a>
+                <form class="hdr-search" action="/catalog" method="get">
+                    <input name="search" placeholder="Пошук…" aria-label="Пошук книг">
+                    <button type="submit">Знайти</button>
+                </form>
+                <a class="btn btn-teal hdr-login auth-link-pending" href="/profile">Вхід</a>
+                <a class="btn btn-teal hdr-register auth-link-pending" href="/profile">Реєстрація</a>
+                <button class="btn btn-teal theme-toggle" type="button" title="Темна тема — скоро" aria-label="Перемкнути тему">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+            </div>
+        </header>
+        <script>
+            (() => {
+                try {
+                    const login = document.querySelector(".hdr-login");
+                    const register = document.querySelector(".hdr-register");
+                    if (!login || !register) return;
+                    if (localStorage.getItem("isLoggedIn") === "true") {
+                        login.textContent = "Профіль";
+                        register.style.display = "none";
+                    } else {
+                        login.textContent = "Вхід";
+                        register.textContent = "Реєстрація";
+                        register.style.display = "";
+                    }
+                    login.classList.remove("auth-link-pending");
+                    register.classList.remove("auth-link-pending");
+                } catch (error) {
+                    document.querySelector(".hdr-login")?.classList.remove("auth-link-pending");
+                    document.querySelector(".hdr-register")?.classList.remove("auth-link-pending");
+                }
+            })();
+        </script>
 
-    <nav class="breadcrumbs" aria-label="Хлібні крихти">
-        <a href="/">Головна</a>
-        <span>/</span>
-        <a href="/catalog">Каталог</a>
-        <span>/</span>
-        <span id="book-breadcrumb-current">Книга</span>
-    </nav>
+        <main class="page book-page">
+            <nav class="crumbs" aria-label="Хлібні крихти">
+                <a href="/">Головна</a>
+                <span>»</span>
+                <a href="/catalog">Каталог</a>
+                <span>»</span>
+                <b id="book-breadcrumb-current">Книга</b>
+            </nav>
 
-    <section id="auth-section" class="auth-section" style="visibility: hidden; min-height: 40px;">
-        <div class="auth-controls">
-            <input type="text" id="nickname" placeholder="Нікнейм (для реєстрації)" style="display:none;">
-            <input type="email" id="email" placeholder="Email" style="display:none;">
-            <input type="password" id="password" placeholder="Пароль" style="display:none;">
-            <button id="btn-login" type="button" style="display:none;">Увійти</button>
-            <button id="btn-register" type="button" style="display:none;">Зареєструватися</button>
-            <button id="btn-logout" type="button" style="display:none;">Вийти</button>
-        </div>
-        <p id="auth-status">Завантаження...</p>
-    </section>
+            <p id="book-status" class="book-status">Завантаження книги...</p>
+            <section id="book-detail" class="book-detail"></section>
 
-    <main class="book-page">
-        <p id="book-status">Завантаження книги...</p>
-        <section id="book-detail" class="book-detail"></section>
+            <section class="related-section">
+                <div class="carousel-head">
+                    <h2 class="h2 serif">Схожі книги</h2>
+                    <div class="carousel-nav">
+                        <button class="icon-btn icon-btn-prev icon-btn-add" id="related-prev" type="button" aria-label="Назад"></button>
+                        <button class="icon-btn icon-btn-next icon-btn-add" id="related-next" type="button" aria-label="Вперед"></button>
+                    </div>
+                </div>
+                <p id="related-status" class="small">Завантаження схожих книг...</p>
+                <div class="carousel-frame">
+                    <div class="carousel" id="related-books"></div>
+                </div>
+            </section>
 
-        <section id="comments-section">
-            <h2>Коментарі та оцінки</h2>
-            <p id="comments-status">Завантаження коментарів...</p>
-            <div id="comments-list" class="comments-list"></div>
+            <section id="comments-section" class="book-comments">
+                <h2 id="comments-title" class="h2 serif">Відгуки читачів</h2>
+                <p id="comments-status" class="book-muted">Завантаження відгуків...</p>
 
-            <form id="comment-form" class="hidden">
-                <h3>Залишити коментар</h3>
-                <label>
-                    Оцінка
-                    <select id="comment-rating">
-                        <option value="5">5</option>
-                        <option value="4">4</option>
-                        <option value="3">3</option>
-                        <option value="2">2</option>
-                        <option value="1">1</option>
-                    </select>
-                </label>
-                <textarea id="comment-text" placeholder="Ваш коментар"></textarea>
-                <button type="submit" class="primary-button">Надіслати</button>
-            </form>
-            <p id="comment-login-note">Увійдіть, щоб залишити коментар і оцінку.</p>
-        </section>
-    </main>
+                <form id="comment-form" class="review-form hidden">
+                    <label>
+                        <span>Ім’я</span>
+                        <input id="comment-name" type="text" placeholder="Ваше ім’я">
+                    </label>
 
-    <footer class="site-footer">
-        <p>ЧитAI — курсова робота студентів групи ММТЕ-11.</p>
-    </footer>
+                    <label>
+                        <span>Відгук</span>
+                        <textarea id="comment-text" placeholder="Ваш відгук"></textarea>
+                    </label>
+
+                    <div class="review-form-bottom">
+                        <span class="review-rating-label">Оцінка:</span>
+                        <div id="comment-stars" class="star-input" aria-label="Оцінка">
+                            <button type="button" data-rating="1" aria-label="1 з 5">★</button>
+                            <button type="button" data-rating="2" aria-label="2 з 5">★</button>
+                            <button type="button" data-rating="3" aria-label="3 з 5">★</button>
+                            <button type="button" data-rating="4" aria-label="4 з 5">★</button>
+                            <button type="button" data-rating="5" aria-label="5 з 5">★</button>
+                        </div>
+                        <input id="comment-rating" type="hidden" value="5">
+                        <button type="submit" class="btn btn-primary review-submit">Опублікувати</button>
+                    </div>
+                </form>
+                <p id="comment-login-note" class="book-muted">Увійдіть, щоб залишити відгук і оцінку.</p>
+                <div id="comments-list" class="comments-list"></div>
+            </section>
+        </main>
+
+        <footer class="ftr">
+            <div class="ftr-in">
+                <p>© 2025 ТОВ "Освітній Простір". Всі права захищено.</p>
+                <p><a href="/help">Політика конфіденційності</a> | <a href="/about">Про нас</a> | <a href="/contacts">Контакти</a></p>
+            </div>
+        </footer>
+    </div>
 
     <script type="module" src="/js/firebase-config.js?v=9"></script>
-    <script type="module" src="/js/book.js?v=9"></script>
+    <script type="module" src="/js/book.js?v=10"></script>
 </body>
 </html>
