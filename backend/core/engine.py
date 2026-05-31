@@ -11,8 +11,9 @@ Exposes two high-level methods:
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from .config import Settings, get_settings
 from .embeddings import OllamaEmbedder, get_embedder
@@ -21,6 +22,12 @@ from .prompts import SYSTEM_PROMPT, build_rag_prompt, build_search_prompt
 from .retriever import DOC_TYPE_BOOK_CHUNK, DOC_TYPE_BOOK_PROFILE, Retriever, get_retriever
 
 logger = logging.getLogger(__name__)
+
+# Matches the marker the frontend appends to assistant turns in history,
+# e.g. "...текст [Рекомендовані книги: Назва А; Назва Б]". This is the only
+# carrier of "which cards were already shown" available to the stateless
+# backend, so we parse the titles back out of it.
+_SHOWN_BOOKS_RE = re.compile(r"\[Рекомендовані книги:\s*(.*?)\]")
 
 
 @dataclass
@@ -61,6 +68,31 @@ class RAGEngine:
         self._retriever = retriever or get_retriever(self._settings)
 
     @staticmethod
+    def _normalize_title(title: str) -> str:
+        """Collapse whitespace + casefold so title matching is robust."""
+        return " ".join(str(title).split()).casefold()
+
+    @classmethod
+    def _extract_shown_titles(
+        cls, history: Optional[List[Dict[str, Any]]]
+    ) -> Dict[str, str]:
+        """Pull titles of already-shown book cards out of the chat history.
+
+        Returns a mapping ``{normalized_title: original_title}`` so callers
+        can match deterministically (keys) yet display nicely (values).
+        """
+        shown: Dict[str, str] = {}
+        for turn in history or []:
+            if (turn.get("role") or "") != "assistant":
+                continue
+            for inside in _SHOWN_BOOKS_RE.findall(turn.get("text") or ""):
+                for title in inside.split(";"):
+                    title = title.strip()
+                    if title:
+                        shown.setdefault(cls._normalize_title(title), title)
+        return shown
+
+    @staticmethod
     def _meta_title(meta: Dict[str, Any]) -> str:
         return meta.get("book_title") or meta.get("title") or "—"
 
@@ -79,18 +111,38 @@ class RAGEngine:
             "relevance_score": round(1.0 - chunk.get("distance", 1.0), 2),
         }
 
-    def _enrich_books(self, books: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _enrich_books(
+        self,
+        books: List[Dict[str, Any]],
+        *,
+        shown_titles: Optional[Set[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        shown = shown_titles or set()
         enriched = []
         seen_book_ids = set()
 
         for book in books:
             book_id = book.get("book_id", "")
-            if book_id in seen_book_ids:
+            if book_id and book_id in seen_book_ids:
                 continue
+
+            meta = self._retriever.get_book(book_id) if book_id else None
+
+            # Skip cards already shown earlier in this conversation: keep the
+            # librarian's text answer, but don't repeat the card (it's still
+            # on screen above) — unless the user explicitly asked to see it
+            # again, in which case the model sets repeat_ok=true.
+            resolved_title = (meta.get("title") if meta else "") or book.get("title", "")
+            if (
+                resolved_title
+                and self._normalize_title(resolved_title) in shown
+                and not book.get("repeat_ok")
+            ):
+                continue
+
             if book_id:
                 seen_book_ids.add(book_id)
 
-            meta = self._retriever.get_book(book_id) if book_id else None
             merged = dict(book)
             if meta:
                 merged["title"] = meta.get("title", merged.get("title", ""))
@@ -194,6 +246,10 @@ class RAGEngine:
         """
         logger.info("RAG chat – query: %.80s…", user_message)
 
+        # Titles of book cards already shown earlier in this conversation, so
+        # we can avoid repeating a card on follow-up questions about a book.
+        shown_map = self._extract_shown_titles(history)
+
         # 1. Embed the query
         query_embedding = self._embedder.embed_query(user_message)
 
@@ -204,7 +260,12 @@ class RAGEngine:
         logger.info("Retrieved %d context items", len(chunks))
 
         # 3. Build the full prompt (with optional conversation history)
-        rag_prompt = build_rag_prompt(user_message, chunks, history=history)
+        rag_prompt = build_rag_prompt(
+            user_message,
+            chunks,
+            history=history,
+            shown_titles=list(shown_map.values()),
+        )
 
         # 4. Generate via LLM (JSON mode)
         try:
@@ -225,7 +286,10 @@ class RAGEngine:
 
         return ChatResponse(
             answer=result.get("answer", ""),
-            books=self._enrich_books(result.get("books", [])),
+            books=self._enrich_books(
+                result.get("books", []),
+                shown_titles=set(shown_map.keys()),
+            ),
             raw_json=result,
             chunks_retrieved=len(chunks),
         )

@@ -54,7 +54,8 @@ SYSTEM_PROMPT = """\
     {
       "book_id": "ID книги з метаданих профілю або фрагменту",
       "description": "1–2 речення: про що книга і чому вона підходить під конкретний запит користувача.",
-      "relevance_score": 0.95
+      "relevance_score": 0.95,
+      "repeat_ok": false
     }
   ]
 }
@@ -62,6 +63,10 @@ SYSTEM_PROMPT = """\
 У масиві "books" не потрібно дублювати назву, автора, дату виходу, жанри чи \
 обкладинку — система підтягне ці поля за `book_id`. Твоя відповідальність: \
 вибрати правильний `book_id` і написати корисне пояснення в `description`.
+
+Поле `repeat_ok` — необов'язкове (типово false). Постав true лише тоді, коли \
+книгу вже показували раніше в цій розмові, але користувач прямо просить показати, \
+знайти чи відкрити її знову. Для нових книг його можна не вказувати.
 
 Якщо книг не знайдено, поверни порожній масив "books": [].
 """
@@ -110,10 +115,34 @@ def _build_history_block(history: List[Dict[str, Any]] | None) -> str:
     )
 
 
+def _build_shown_block(shown_titles: List[str] | None) -> str:
+    """Render the list of books whose cards were already shown earlier.
+
+    Lets the librarian avoid repeating a card for a book the user has
+    already seen, while still answering follow-up questions in text.
+    """
+    if not shown_titles:
+        return ""
+
+    items = "\n".join(f"- {title}" for title in shown_titles)
+    return (
+        "## Картки цих книг ти вже показував у цій розмові:\n\n"
+        f"{items}\n\n"
+        "Коли користувач просто ставить уточнююче питання про вже показану книгу — "
+        "відповідай лише текстом і НЕ додавай цю книгу у \"books\" (картка вже є на "
+        "екрані вище).\n"
+        "Додай таку книгу в \"books\" знову лише якщо користувач прямо просить ще раз "
+        "показати, знайти чи відкрити її — і тоді встанови для неї \"repeat_ok\": true.\n"
+        "Нові книги, яких ще не було в розмові, додавай у \"books\" як зазвичай.\n\n"
+        "---\n\n"
+    )
+
+
 def build_rag_prompt(
     query: str,
     chunks: List[Dict[str, Any]],
     history: List[Dict[str, Any]] | None = None,
+    shown_titles: List[str] | None = None,
 ) -> str:
     """
     Assemble a full RAG prompt by injecting retrieved chunks as context.
@@ -167,6 +196,7 @@ def build_rag_prompt(
         f"{context_block}\n\n"
         f"---\n\n"
         f"{_build_history_block(history)}"
+        f"{_build_shown_block(shown_titles)}"
         f"## Поточний запит користувача:\n\n"
         f"{query}\n\n"
         f"Дай відповідь у JSON-форматі, як описано в системних інструкціях."
