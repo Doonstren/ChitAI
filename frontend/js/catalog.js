@@ -4,14 +4,21 @@ import { initAuthUi } from "./auth-ui.js?v=9";
 import { applyRatingStats, normalizeBook, escapeHtml, bookUrl } from "./common.js?v=10";
 import { loadFavoriteIds, toggleFavorite } from "./favorites.js?v=9";
 
+const PAGE_SIZE = 10;
+
 const catalogStatus = document.getElementById("catalog-status");
 const catalogBooks = document.getElementById("catalog-books");
+const catalogPagination = document.getElementById("catalog-pagination");
 const searchInput = document.getElementById("catalog-search");
 const headerSearch = document.getElementById("hdr-search");
 const headerSearchInput = document.getElementById("hdr-search-input");
 const genreFilter = document.getElementById("genre-filter");
-const authorFilter = document.getElementById("author-filter");
+const yearFilter = document.getElementById("year-filter");
+const yearMinLabel = document.getElementById("year-min-label");
+const yearMaxLabel = document.getElementById("year-max-label");
+const applyFilters = document.getElementById("apply-filters");
 const resetFilters = document.getElementById("reset-filters");
+const backToTop = document.getElementById("back-to-top");
 const loginLink = document.querySelector(".hdr-login");
 const registerLink = document.querySelector(".hdr-register");
 const sortButtons = [...document.querySelectorAll(".sort-btn")];
@@ -19,11 +26,9 @@ const sortButtons = [...document.querySelectorAll(".sort-btn")];
 let currentUser = null;
 let favoriteIds = new Set();
 let cachedBooks = [];
-let sortState = {
-    key: "popularity",
-    titleDirection: "asc",
-    yearDirection: "desc",
-};
+let sortKey = "popularity";
+let currentPage = 1;
+let yearBounds = { min: 0, max: 0 };
 
 const initialSearch = new URLSearchParams(window.location.search).get("search") || "";
 searchInput.value = initialSearch;
@@ -48,37 +53,69 @@ catalogBooks.addEventListener("click", async (event) => {
     setFavIcon(button, nextActive);
 });
 
-[searchInput, genreFilter, authorFilter].forEach((element) => {
-    element.addEventListener("input", renderCatalog);
+genreFilter.addEventListener("input", () => {
+    currentPage = 1;
+    renderCatalog();
+});
+
+yearFilter.addEventListener("input", () => {
+    currentPage = 1;
+    renderYearLabels();
+    renderCatalog();
+});
+
+applyFilters.addEventListener("click", () => {
+    currentPage = 1;
+    renderCatalog();
+});
+
+searchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        currentPage = 1;
+        renderCatalog();
+    }
 });
 
 resetFilters.addEventListener("click", () => {
     searchInput.value = "";
     headerSearchInput.value = "";
     genreFilter.value = "";
-    authorFilter.value = "";
+    yearFilter.value = String(yearBounds.max);
+    currentPage = 1;
+    renderYearLabels();
     renderCatalog();
 });
 
 headerSearch.addEventListener("submit", (event) => {
     event.preventDefault();
     searchInput.value = headerSearchInput.value.trim();
+    currentPage = 1;
     renderCatalog();
 });
 
 sortButtons.forEach((button) => {
     button.addEventListener("click", () => {
-        const nextKey = button.dataset.sort;
-        if (nextKey === "title") {
-            sortState.titleDirection = sortState.key === "title" && sortState.titleDirection === "asc" ? "desc" : "asc";
-        }
-        if (nextKey === "year") {
-            sortState.yearDirection = sortState.key === "year" && sortState.yearDirection === "desc" ? "asc" : "desc";
-        }
-        sortState.key = nextKey;
+        sortKey = button.dataset.sort;
+        currentPage = 1;
         renderSortButtons();
         renderCatalog();
     });
+});
+
+catalogPagination.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-page]");
+    if (!button) return;
+    currentPage = Number(button.dataset.page);
+    renderCatalog();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+backToTop.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+window.addEventListener("scroll", () => {
+    backToTop.classList.toggle("is-visible", window.scrollY > 420);
 });
 
 loadCatalog();
@@ -109,7 +146,7 @@ async function loadCatalog() {
 
 function fillFilters(books) {
     const genres = new Set();
-    const authors = new Set();
+    const years = books.map(getYear).filter(Boolean);
 
     books.forEach((book) => {
         if (Array.isArray(book.genres)) {
@@ -117,54 +154,69 @@ function fillFilters(books) {
                 if (genre) genres.add(genre);
             });
         }
-        if (book.author) authors.add(book.author);
     });
 
+    yearBounds = {
+        min: years.length ? Math.min(...years) : 0,
+        max: years.length ? Math.max(...years) : 0,
+    };
+    yearFilter.min = String(yearBounds.min);
+    yearFilter.max = String(yearBounds.max);
+    yearFilter.value = String(yearBounds.max);
+
     genreFilter.innerHTML = `<option value="">Усі жанри</option>${optionList([...genres].sort((a, b) => a.localeCompare(b, "uk")))}`;
-    authorFilter.innerHTML = `<option value="">Усі автори</option>${optionList([...authors].sort((a, b) => a.localeCompare(b, "uk")))}`;
+    renderYearLabels();
 }
 
 function renderCatalog() {
     if (!cachedBooks.length) {
         catalogStatus.textContent = "Каталог поки порожній.";
         catalogBooks.innerHTML = "";
+        catalogPagination.innerHTML = "";
         return;
     }
 
     const search = searchInput.value.trim().toLocaleLowerCase("uk-UA");
     const selectedGenre = genreFilter.value;
-    const selectedAuthor = authorFilter.value;
+    const maxYear = Number(yearFilter.value || yearBounds.max);
 
     const filteredBooks = cachedBooks.filter((book) => {
         const title = String(book.title || "").toLocaleLowerCase("uk-UA");
         const author = String(book.author || "").toLocaleLowerCase("uk-UA");
         const description = String(book.description || "").toLocaleLowerCase("uk-UA");
         const genres = Array.isArray(book.genres) ? book.genres : [];
+        const year = getYear(book);
 
         const matchesSearch = !search || title.includes(search) || author.includes(search) || description.includes(search);
         const matchesGenre = !selectedGenre || genres.includes(selectedGenre);
-        const matchesAuthor = !selectedAuthor || book.author === selectedAuthor;
+        const matchesYear = !year || year <= maxYear;
 
-        return matchesSearch && matchesGenre && matchesAuthor;
+        return matchesSearch && matchesGenre && matchesYear;
     });
 
     const sortedBooks = sortBooks(filteredBooks);
+    const pageCount = Math.max(1, Math.ceil(sortedBooks.length / PAGE_SIZE));
+    currentPage = Math.min(currentPage, pageCount);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const visibleBooks = sortedBooks.slice(start, start + PAGE_SIZE);
+
     catalogStatus.textContent = `Знайдено книг: ${sortedBooks.length}`;
-    catalogBooks.innerHTML = sortedBooks.map(book => renderCatalogCard(book, favoriteIds)).join("");
+    catalogBooks.innerHTML = visibleBooks.map(book => renderCatalogCard(book, favoriteIds)).join("");
+    renderPagination(pageCount);
 }
 
 function sortBooks(books) {
     const list = [...books];
-    if (sortState.key === "title") {
+    if (sortKey === "title-asc" || sortKey === "title-desc") {
         return list.sort((a, b) => {
             const result = String(a.title || "").localeCompare(String(b.title || ""), "uk");
-            return sortState.titleDirection === "asc" ? result : -result;
+            return sortKey === "title-asc" ? result : -result;
         });
     }
-    if (sortState.key === "year") {
+    if (sortKey === "year-desc" || sortKey === "year-asc") {
         return list.sort((a, b) => {
             const result = getYear(b) - getYear(a);
-            return sortState.yearDirection === "desc" ? result : -result;
+            return sortKey === "year-desc" ? result : -result;
         });
     }
     return list.sort((a, b) => {
@@ -178,10 +230,25 @@ function sortBooks(books) {
 
 function renderSortButtons() {
     sortButtons.forEach((button) => {
-        button.classList.toggle("active", button.dataset.sort === sortState.key);
+        button.classList.toggle("active", button.dataset.sort === sortKey);
     });
-    document.getElementById("sort-title").textContent = sortState.titleDirection === "asc" ? "Назва А-Я" : "Назва Я-А";
-    document.getElementById("sort-year").textContent = sortState.yearDirection === "desc" ? "Рік новіші" : "Рік старіші";
+}
+
+function renderPagination(pageCount) {
+    if (pageCount <= 1) {
+        catalogPagination.innerHTML = "";
+        return;
+    }
+
+    const prevPage = Math.max(1, currentPage - 1);
+    const nextPage = Math.min(pageCount, currentPage + 1);
+    const pages = Array.from({ length: pageCount }, (_, index) => index + 1);
+
+    catalogPagination.innerHTML = `
+        <button class="icon-btn icon-btn-prev icon-btn-add" type="button" data-page="${prevPage}" ${currentPage === 1 ? "disabled" : ""} aria-label="Попередня сторінка"></button>
+        ${pages.map(page => `<button class="pg${page === currentPage ? " active" : ""}" type="button" data-page="${page}">${page}</button>`).join("")}
+        <button class="icon-btn icon-btn-next icon-btn-add" type="button" data-page="${nextPage}" ${currentPage === pageCount ? "disabled" : ""} aria-label="Наступна сторінка"></button>
+    `;
 }
 
 function renderCatalogCard(book, favIds) {
@@ -247,6 +314,11 @@ function getYear(book) {
     const value = book.publication_year || book.publication_date || "";
     const match = String(value).match(/\d{4}/);
     return match ? Number(match[0]) : 0;
+}
+
+function renderYearLabels() {
+    yearMinLabel.textContent = yearBounds.min || "—";
+    yearMaxLabel.textContent = yearFilter.value || yearBounds.max || "—";
 }
 
 function optionList(values) {
