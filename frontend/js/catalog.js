@@ -342,12 +342,19 @@ function updateHeaderAuth(user) {
     if (user) {
         loginLink.textContent = "Профіль";
         registerLink.style.display = "none";
+        revealAuthLinks();
     } else {
         loginLink.textContent = "Вхід";
         registerLink.textContent = "Реєстрація";
         registerLink.href = "/profile";
         registerLink.style.display = "";
+        revealAuthLinks();
     }
+}
+
+function revealAuthLinks() {
+    loginLink?.classList.remove("auth-link-pending");
+    registerLink?.classList.remove("auth-link-pending");
 }
 
 function getAverageRating(book) {
