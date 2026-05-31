@@ -4,43 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ЧитAI — допомога</title>
-    <link rel="stylesheet" href="/css/main.css?v=10">
+    <link rel="icon" type="image/svg+xml" href="/assets/Favicon.svg">
+    <link rel="stylesheet" href="/css/tokens.css?v=2">
+    <link rel="stylesheet" href="/css/kit.css?v=16">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap">
 </head>
 <body>
-    <nav class="site-nav">
-        <a href="/">Головна</a>
-        <a href="/catalog">Каталог</a>
-        <a href="/about">Про нас</a>
-        <a href="/help">Допомога</a>
-        <a href="/contacts">Контакти</a>
-        <a href="/chat">Нейробібліотекар</a>
-        <a class="profile-link" href="/profile">Профіль</a>
-    </nav>
+    <div class="app">
+        <header class="hdr">
+            <div class="hdr-in">
+                <a class="logo" href="/">ЧитAI</a>
+                <nav class="nav" aria-label="Головна навігація">
+                    <a href="/">Головна</a>
+                    <a href="/catalog">Каталог</a>
+                    <a href="/about">Про нас</a>
+                    <a class="active" href="/help">Допомога</a>
+                    <a href="/contacts">Контакти</a>
+                </nav>
+                <div class="hdr-sp"></div>
+                <a class="btn btn-primary hdr-ai" href="/chat">ЧитAI</a>
+                <form class="hdr-search" action="/catalog" method="get">
+                    <input name="search" placeholder="Пошук…" aria-label="Пошук книг">
+                    <button type="submit">Знайти</button>
+                </form>
+                <a class="btn btn-teal hdr-login" href="/profile">Вхід</a>
+                <a class="btn btn-teal hdr-register" href="/profile">Реєстрація</a>
+                <button class="btn btn-teal theme-toggle" type="button" title="Темна тема — скоро" aria-label="Перемкнути тему">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+            </div>
+        </header>
 
-    <nav class="breadcrumbs" aria-label="Хлібні крихти">
-        <a href="/">Головна</a>
-        <span>/</span>
-        <span>Допомога</span>
-    </nav>
+        <main class="page static-page">
+            <nav class="crumbs" aria-label="Хлібні крихти">
+                <a href="/">Головна</a>
+                <span>»</span>
+                <b>Допомога</b>
+            </nav>
 
-    <main class="static-page">
-        <h1>Допомога</h1>
-        <section>
-            <h2>Як знайти книгу</h2>
-            <p>Відкрийте каталог і скористайтеся пошуком, фільтром за жанром або фільтром за автором.</p>
-        </section>
-        <section>
-            <h2>Як користуватися нейробібліотекарем</h2>
-            <p>Увійдіть у профіль, відкрийте сторінку нейробібліотекаря та поставте запитання про книги з каталогу.</p>
-        </section>
-        <section>
-            <h2>Вибране та відгуки</h2>
-            <p>Після входу можна додавати книги до вибраного, залишати коментарі та оцінки на сторінках книг.</p>
-        </section>
-    </main>
+            <h1 class="static-title serif">Допомога</h1>
+            <div class="static-stack">
+                <section class="info-block">
+                    <h2>1. Як знайти книгу</h2>
+                    <p>Відкрийте каталог і скористайтеся пошуком, жанрами, роком видання або сортуванням. Після вибору параметрів натисніть «Застосувати», щоб оновити список книг.</p>
+                </section>
 
-    <footer class="site-footer">
-        <p>ЧитAI — курсова робота студентів групи ММТЕ-11.</p>
-    </footer>
+                <section class="info-block">
+                    <h2>2. Як читати книгу</h2>
+                    <p>На картці або сторінці книги натисніть кнопку читання. Якщо книга має доступний файл, сайт відкриє сторінку читання з підготовленим текстом або документом.</p>
+                </section>
+
+                <section class="info-block">
+                    <h2>3. Обране, оцінки та коментарі</h2>
+                    <p>Після входу в акаунт можна додавати книги до обраного, залишати оцінки та писати коментарі на сторінках книг. Обране відображається у профілі користувача.</p>
+                </section>
+
+                <section class="info-block">
+                    <h2>4. Нейробібліотекар</h2>
+                    <p>Нейробібліотекар доступний тільки авторизованим користувачам. Він шукає рекомендації серед книг каталогу і пояснює, чому запропоновані видання підходять до запиту.</p>
+                </section>
+
+                <section class="info-block">
+                    <h2>5. Якщо щось не працює</h2>
+                    <p>Оновіть сторінку, перевірте вхід у профіль і повторіть дію. Якщо проблема лишається, скористайтеся сторінкою контактів і передайте команді короткий опис помилки.</p>
+                </section>
+            </div>
+        </main>
+
+        <footer class="ftr">
+            <div class="ftr-in">
+                <p>© 2025 ТОВ "Освітній Простір". Всі права захищено.</p>
+                <p><a href="/help">Політика конфіденційності</a> | <a href="/about">Про нас</a> | <a href="/contacts">Контакти</a></p>
+            </div>
+        </footer>
+    </div>
+    <script type="module" src="/js/static.js?v=1"></script>
 </body>
 </html>

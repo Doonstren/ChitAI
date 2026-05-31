@@ -4,33 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ЧитAI — про нас</title>
-    <link rel="stylesheet" href="/css/main.css?v=10">
+    <link rel="icon" type="image/svg+xml" href="/assets/Favicon.svg">
+    <link rel="stylesheet" href="/css/tokens.css?v=2">
+    <link rel="stylesheet" href="/css/kit.css?v=16">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap">
 </head>
 <body>
-    <nav class="site-nav">
-        <a href="/">Головна</a>
-        <a href="/catalog">Каталог</a>
-        <a href="/about">Про нас</a>
-        <a href="/help">Допомога</a>
-        <a href="/contacts">Контакти</a>
-        <a href="/chat">Нейробібліотекар</a>
-        <a class="profile-link" href="/profile">Профіль</a>
-    </nav>
+    <div class="app">
+        <header class="hdr">
+            <div class="hdr-in">
+                <a class="logo" href="/">ЧитAI</a>
+                <nav class="nav" aria-label="Головна навігація">
+                    <a href="/">Головна</a>
+                    <a href="/catalog">Каталог</a>
+                    <a class="active" href="/about">Про нас</a>
+                    <a href="/help">Допомога</a>
+                    <a href="/contacts">Контакти</a>
+                </nav>
+                <div class="hdr-sp"></div>
+                <a class="btn btn-primary hdr-ai" href="/chat">ЧитAI</a>
+                <form class="hdr-search" action="/catalog" method="get">
+                    <input name="search" placeholder="Пошук…" aria-label="Пошук книг">
+                    <button type="submit">Знайти</button>
+                </form>
+                <a class="btn btn-teal hdr-login" href="/profile">Вхід</a>
+                <a class="btn btn-teal hdr-register" href="/profile">Реєстрація</a>
+                <button class="btn btn-teal theme-toggle" type="button" title="Темна тема — скоро" aria-label="Перемкнути тему">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+            </div>
+        </header>
 
-    <nav class="breadcrumbs" aria-label="Хлібні крихти">
-        <a href="/">Головна</a>
-        <span>/</span>
-        <span>Про нас</span>
-    </nav>
+        <main class="page static-page">
+            <nav class="crumbs" aria-label="Хлібні крихти">
+                <a href="/">Головна</a>
+                <span>»</span>
+                <b>Про нас</b>
+            </nav>
 
-    <main class="static-page">
-        <h1>Про нас</h1>
-        <p>ЧитAI — навчальний проєкт електронної бібліотеки з каталогом, сторінками книг, відгуками, вибраним та нейробібліотекарем.</p>
-        <p>Проєкт створюється як курсова робота студентів групи ММТЕ-11 Національного університету «Львівська політехніка».</p>
-    </main>
+            <h1 class="static-title serif">Про нас</h1>
+            <div class="static-stack">
+                <section class="info-block">
+                    <h2>1. Що таке ЧитAI</h2>
+                    <p>ЧитAI — навчальний вебпроєкт електронної бібліотеки з каталогом книг, сторінками видань, обраним, коментарями, оцінками та нейробібліотекарем для рекомендацій.</p>
+                </section>
 
-    <footer class="site-footer">
-        <p>ЧитAI — курсова робота студентів групи ММТЕ-11.</p>
-    </footer>
+                <section class="info-block">
+                    <h2>2. Мета проєкту</h2>
+                    <p>Мета сервісу — показати, як цифрова бібліотека може поєднувати зручний каталог, персональні дії користувача та пошук книг за змістом або настроєм через RAG-систему.</p>
+                </section>
+
+                <section class="info-block">
+                    <h2>3. Навчальний контекст</h2>
+                    <p>Проєкт створюється як курсова робота студентів групи ММТЕ-11 Національного університету «Львівська політехніка», Інституту поліграфії та медійних технологій.</p>
+                </section>
+
+                <section class="info-block">
+                    <h2>4. Ролі в команді</h2>
+                    <p>Backend відповідає за обробку книг і нейропошук, frontend — за взаємодію користувача з сайтом, дизайн — за візуальну систему, а контент-менеджмент — за підготовку метаданих і легальних матеріалів.</p>
+                </section>
+            </div>
+        </main>
+
+        <footer class="ftr">
+            <div class="ftr-in">
+                <p>© 2025 ТОВ "Освітній Простір". Всі права захищено.</p>
+                <p><a href="/help">Політика конфіденційності</a> | <a href="/about">Про нас</a> | <a href="/contacts">Контакти</a></p>
+            </div>
+        </footer>
+    </div>
+    <script type="module" src="/js/static.js?v=1"></script>
 </body>
 </html>

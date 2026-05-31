@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ЧитAI — каталог</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/Favicon.svg">
     <link rel="stylesheet" href="/css/tokens.css?v=2">
-    <link rel="stylesheet" href="/css/kit.css?v=12">
+    <link rel="stylesheet" href="/css/kit.css?v=16">
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap">
 </head>
-<body>
+<body class="catalog-body">
     <div class="app">
         <header class="hdr">
             <div class="hdr-in">
@@ -60,19 +61,23 @@
                 <aside class="catalog-filters" aria-label="Фільтри каталогу">
                     <h2 class="catalog-filter-title serif">Фільтри</h2>
 
-                    <label class="label" for="genre-filter">Жанри</label>
-                    <select class="field" id="genre-filter">
-                        <option value="">Усі жанри</option>
-                    </select>
+                    <div class="label">Жанри</div>
+                    <div id="genre-filter" class="filter-checks"></div>
 
                     <label class="label" for="catalog-search">Автор</label>
                     <input class="field" type="search" id="catalog-search" placeholder="Пошук...">
-                    <button id="apply-filters" type="button" class="btn btn-primary btn-block">Знайти</button>
+                    <button id="find-filters" type="button" class="btn btn-primary btn-block">Знайти</button>
 
-                    <label class="label" for="year-filter">Рік видання</label>
-                    <input id="year-filter" class="range-field" type="range" min="0" max="0" value="0">
+                    <div class="label">Рік видання</div>
+                    <div class="range2" id="year-range">
+                        <div class="track"></div>
+                        <div class="fill" id="year-range-fill"></div>
+                        <input id="year-min-filter" type="range" min="0" max="0" value="0" aria-label="Мінімальний рік">
+                        <input id="year-max-filter" type="range" min="0" max="0" value="0" aria-label="Максимальний рік">
+                    </div>
                     <div class="range-vals"><span id="year-min-label">—</span><span id="year-max-label">—</span></div>
 
+                    <button id="apply-filters" type="button" class="btn btn-primary btn-block">Застосувати</button>
                     <button id="reset-filters" type="button" class="btn btn-secondary btn-block">Скинути</button>
                 </aside>
 
@@ -94,6 +99,6 @@
     </div>
 
     <script type="module" src="/js/firebase-config.js?v=9"></script>
-    <script type="module" src="/js/catalog.js?v=11"></script>
+    <script type="module" src="/js/catalog.js?v=15"></script>
 </body>
 </html>

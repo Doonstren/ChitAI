@@ -48,3 +48,6 @@ frontend/js/firebase-config.js
 
 # Logs
 *.log
+
+# Local helper scratch files
+backend/_fs_diff.py
