@@ -1,0 +1,111 @@
+/* ============================================================================
+   ЧитAI — Design Tokens (ported from the design system, verbatim values).
+   Single source of truth: colors, type ramp, spacing, radii, shadows.
+   ========================================================================== */
+
+/* Self-hosted brand fonts (TTF in /fonts). */
+@font-face { font-family: 'Roboto'; font-style: normal; font-weight: 300; font-display: swap; src: url('../fonts/Roboto-Light.ttf') format('truetype'); }
+@font-face { font-family: 'Roboto'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/Roboto-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'Roboto'; font-style: normal; font-weight: 700; font-display: swap; src: url('../fonts/Roboto-Bold.ttf') format('truetype'); }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 700; font-display: swap; src: url('../fonts/EBGaramond-Bold.ttf') format('truetype'); }
+
+:root {
+  /* ---- BRAND · primary accent (warm gold) ----------------------------- */
+  --orange:         #D99026;
+  --orange-hover:   #F2A12A;
+  --orange-press:   #BF7F21;
+  --orange-light:   #FFC673;
+
+  /* ---- BRAND · ink greens (text + dark surfaces) ---------------------- */
+  --green-900:      #1A2E26;
+  --green-800:      #233A30;
+  --green-700:      #2A4A3D;
+  --sage:           #596860;
+
+  /* ---- BRAND · secondary (teal) + brown ------------------------------- */
+  --teal:           #2E6B85;
+  --teal-hover:     #377F9E;
+  --teal-press:     #25566B;
+  --brown:          #3E2D24;
+
+  /* ---- NEUTRALS (warm) ------------------------------------------------ */
+  --cream:          #F7F4EB;
+  --beige:          #E6E0D0;
+  --white:          #FFFFFF;
+  --gray-300:       #D9D9D9;
+  --warm-gray:      #A39E93;
+  --gray-500:       #8D8D8D;
+  --gray-700:       #404040;
+  --ink-black:      #1E1E1E;
+
+  /* ---- SEMANTIC ------------------------------------------------------- */
+  --success:        #387A4B;
+  --warning:        #C2591B;
+  --danger:         #B53A26;
+  --info:           #2E6B85;
+
+  /* =====================  SEMANTIC ALIASES  ============================ */
+  --bg:             var(--cream);
+  --surface:        var(--beige);
+  --surface-input:  var(--white);
+  --fg:             var(--green-900);
+  --fg-muted:       var(--warm-gray);
+  --fg-on-accent:   var(--green-900);
+  --fg-on-teal:     var(--white);
+  --on-accent:      #1A2E26;
+  --border:         rgba(62,45,36,0.18);
+  --divider:        rgba(62,45,36,0.10);
+
+  /* =====================  TYPOGRAPHY  ================================== */
+  --font-display: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --font-body:    'Roboto', system-ui, -apple-system, sans-serif;
+
+  --t-hero:    700 68px/1.0  var(--font-display);
+  --t-h1:      700 48px/1.05 var(--font-display);
+  --t-h2:      700 24px/1.1  var(--font-display);
+  --t-h3:      700 16px/1.2  var(--font-body);
+  --t-large:   300 24px/1.3  var(--font-body);
+  --t-body:    400 16px/1.5  var(--font-body);
+  --t-small:   400 14px/1.45 var(--font-body);
+  --t-footer:  400 12px/1.4  var(--font-body);
+  --t-tag:     500 10px/1.0  var(--font-body);
+
+  /* =====================  SPACING SCALE  =============================== */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+  --sp-9: 80px; --sp-10: 96px; --sp-11: 128px; --sp-12: 160px;
+
+  /* =====================  RADII  ======================================= */
+  --r-tag:    15px;
+  --r-pill:   15px;
+  --r-cover:  24px;
+  --r-card:   32px;
+  --r-round:  999px;
+
+  /* =====================  ELEVATION / SHADOWS  ========================= */
+  --shadow-soft:   0 0 4px 0 rgba(0,0,0,0.25);
+  --shadow-card:   0 0 5px 0 rgba(0,0,0,0.25);
+  --shadow-img:    0 5px 5px 0 rgba(0,0,0,0.25);
+  --inset-hi:      inset 0 0 4px 0 rgba(255,255,255,0.25);
+  --inset-lo:      inset 0 0 4px 0 rgba(0,0,0,0.25);
+  --shadow-btn:    inset 0 0 4px 0 rgba(255,255,255,0.25), 0 0 4px 0 rgba(0,0,0,0.25);
+}
+
+/* ============================================================================
+   DARK THEME (Темна тема) — tokens kept as-is; toggle wired up later by you.
+   Set data-theme="dark" on <html> to activate.
+   ========================================================================== */
+[data-theme="dark"] {
+  --cream:     #16261F;
+  --beige:     #20342B;
+  --white:     #20342B;
+  --gray-300:  #2A4A3D;
+  --gray-500:  #3A4F45;
+  --warm-gray: #9AA39B;
+  --green-900: #F2EFE6;
+  --green-800: #D8D2C4;
+  --ink-black: #F2EFE6;
+  --brown:     #C9A06A;
+  --divider:   rgba(247,244,235,0.12);
+  --border:    rgba(247,244,235,0.16);
+}

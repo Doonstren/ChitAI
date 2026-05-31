@@ -3,51 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ЧитAI — головна</title>
-    <link rel="stylesheet" href="/css/main.css?v=9">
+    <title>ЧитAI — Розумна бібліотека</title>
+    <link rel="stylesheet" href="/css/tokens.css?v=2">
+    <link rel="stylesheet" href="/css/kit.css?v=10">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap">
 </head>
 <body>
-    <nav class="site-nav">
-        <a href="/">Головна</a>
-        <a href="/catalog">Каталог</a>
-        <a href="/about">Про нас</a>
-        <a href="/help">Допомога</a>
-        <a href="/contacts">Контакти</a>
-        <a href="/chat">Нейробібліотекар</a>
-        <a class="profile-link" href="/profile">Профіль</a>
-    </nav>
-
-    <h1>ЧитAI</h1>
-    <p>Електронна бібліотека з нейробібліотекарем, каталогом книг, відгуками та вибраним.</p>
-
-    <section id="auth-section" class="auth-section" style="visibility: hidden; min-height: 40px;">
-        <div class="auth-controls">
-            <input type="text" id="nickname" placeholder="Нікнейм (для реєстрації)" style="display:none;">
-            <input type="email" id="email" placeholder="Email" style="display:none;">
-            <input type="password" id="password" placeholder="Пароль" style="display:none;">
-            <button id="btn-login" type="button" style="display:none;">Увійти</button>
-            <button id="btn-register" type="button" style="display:none;">Зареєструватися</button>
-            <button id="btn-logout" type="button" style="display:none;">Вийти</button>
-        </div>
-        <p id="auth-status">Завантаження...</p>
-    </section>
-
-    <main>
-        <section>
-            <div class="section-heading">
-                <h2>Книги</h2>
-                <a href="/catalog">Увесь каталог</a>
+    <div class="app">
+        <header class="hdr">
+            <div class="hdr-in">
+                <a class="logo" href="/">ЧитAI</a>
+                <nav class="nav" aria-label="Головна навігація">
+                    <a class="active" href="/">Головна</a>
+                    <a href="/catalog">Каталог</a>
+                    <a href="/about">Про нас</a>
+                    <a href="/help">Допомога</a>
+                    <a href="/contacts">Контакти</a>
+                </nav>
+                <div class="hdr-sp"></div>
+                <a class="btn btn-primary hdr-ai" href="/chat">ЧитAI</a>
+                <form class="hdr-search" id="hdr-search">
+                    <input id="hdr-search-input" placeholder="Пошук…" aria-label="Пошук книг">
+                    <button type="submit">Знайти</button>
+                </form>
+                <a class="btn btn-teal hdr-login" href="/profile">Вхід</a>
+                <a class="btn btn-teal hdr-register" href="/profile">Реєстрація</a>
+                <button class="btn btn-teal theme-toggle" type="button" title="Темна тема — скоро" aria-label="Перемкнути тему">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
             </div>
-            <p id="home-status">Завантаження книг...</p>
-            <div id="home-books" class="home-book-row" aria-label="Горизонтальний список книг"></div>
-        </section>
-    </main>
+        </header>
 
-    <footer class="site-footer">
-        <p>ЧитAI — курсова робота студентів групи ММТЕ-11.</p>
-    </footer>
+        <main>
+            <!-- Hero -->
+            <section class="hero">
+                <div class="hero-bg"></div>
+                <div class="hero-dim"></div>
+                <div class="hero-content">
+                    <h1 class="hero-title serif">Відкрийте Новий Спосіб Пошуку Книг</h1>
+                    <p class="hero-lede">ЧитAI розуміє ваші побажання краще, ніж будь-коли. Знайдіть книгу за описом, настроєм чи отримайте унікальні рекомендації.</p>
+                    <form class="hero-search" id="hero-search">
+                        <input id="hero-search-input" placeholder='Запитайте: "хочу щось легке для відпочинку"' aria-label="AI-пошук">
+                        <button type="submit">Знайти</button>
+                    </form>
+                    <a class="btn btn-secondary hero-cta" href="/catalog">Переглянути весь каталог</a>
+                </div>
+            </section>
+
+            <!-- New arrivals -->
+            <section class="page">
+                <div class="carousel-head">
+                    <h2 class="h2 serif">Нові надходження</h2>
+                    <div class="carousel-nav">
+                        <button class="icon-btn icon-btn-prev" id="carousel-prev" type="button" aria-label="Назад"></button>
+                        <button class="icon-btn icon-btn-next icon-btn-add" id="carousel-next" type="button" aria-label="Вперед"></button>
+                    </div>
+                </div>
+                <p id="home-status" class="small" style="color: var(--warm-gray);">Завантаження книг…</p>
+                <div class="carousel-frame">
+                    <div class="carousel" id="home-books"></div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="ftr">
+            <div class="ftr-in">
+                <p>© 2025 ТОВ "Освітній Простір". Всі права захищено.</p>
+                <p><a href="/help">Політика конфіденційності</a> | <a href="/about">Про нас</a> | <a href="/contacts">Контакти</a></p>
+            </div>
+        </footer>
+    </div>
 
     <script type="module" src="/js/firebase-config.js?v=9"></script>
-    <script type="module" src="/js/index.js?v=9"></script>
+    <script type="module" src="/js/index.js?v=14"></script>
 </body>
 </html>

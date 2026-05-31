@@ -18,6 +18,9 @@ backend/data/
 # Local documentation and planning notes
 docs/
 
+# Temporary design source (Figma export) — port adapted bits into frontend/
+design/
+
 # Books (large/local/copyright-sensitive files)
 backend/books/
 backend/books_to_ingest/
