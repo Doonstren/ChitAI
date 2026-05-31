@@ -35,6 +35,28 @@
                 </button>
             </div>
         </header>
+        <script>
+            (() => {
+                try {
+                    const login = document.querySelector(".hdr-login");
+                    const register = document.querySelector(".hdr-register");
+                    if (!login || !register) return;
+                    if (localStorage.getItem("isLoggedIn") === "true") {
+                        login.textContent = "Профіль";
+                        register.style.display = "none";
+                    } else {
+                        login.textContent = "Вхід";
+                        register.textContent = "Реєстрація";
+                        register.style.display = "";
+                    }
+                    login.classList.remove("auth-link-pending");
+                    register.classList.remove("auth-link-pending");
+                } catch (error) {
+                    document.querySelector(".hdr-login")?.classList.remove("auth-link-pending");
+                    document.querySelector(".hdr-register")?.classList.remove("auth-link-pending");
+                }
+            })();
+        </script>
 
         <main class="page catalog-page">
             <nav class="crumbs" aria-label="Хлібні крихти">
