@@ -66,7 +66,7 @@ contactForm?.addEventListener("submit", (event) => {
         return;
     }
 
-    status.textContent = "Дякуємо за зворотний зв'язок. Повідомлення декоративно прийнято.";
+    status.textContent = "Дякуємо за зворотний зв'язок. Повідомлення надіслано.";
     contactForm.reset();
 });
 
