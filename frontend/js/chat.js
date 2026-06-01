@@ -12,7 +12,7 @@ import {
     deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { initAuthUi } from "./auth-ui.js?v=9";
-import { BACKEND_URL, escapeHtml, renderBookCard } from "./common.js?v=13";
+import { BACKEND_URL, escapeHtml, renderBookCard } from "./common.js?v=14";
 import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=10";
 
 const chatAuthNote = document.getElementById("chat-auth-note");

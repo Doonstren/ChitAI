@@ -19,7 +19,7 @@ import {
     updateProfile,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { initAuthUi } from "./auth-ui.js?v=9";
-import { bookUrl, escapeHtml } from "./common.js?v=13";
+import { bookUrl, escapeHtml } from "./common.js?v=14";
 
 const profileContent = document.getElementById("profile-content");
 const profileLoginNote = document.getElementById("profile-login-note");

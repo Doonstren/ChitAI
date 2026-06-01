@@ -13,10 +13,17 @@ export function bookUrl(bookId) {
     return `/books/${encodeURIComponent(bookId)}`;
 }
 
+// Domains wsrv.nl refuses to fetch ("Domain or TLD blocked by policy").
+// Covers from these hosts are served directly, without the proxy.
+const COVER_PROXY_BLOCKLIST = ["knigoed.club"];
+
 /**
  * Proxy an external cover image through wsrv.nl to resize + convert to WebP.
  * Covers are hot-linked from third-party sites, so we can't resize at source.
  * wsrv.nl downloads, caches (CDN), resizes and re-encodes them on the fly.
+ *
+ * Hosts in COVER_PROXY_BLOCKLIST are returned untouched because wsrv.nl
+ * rejects them by policy.
  *
  * @param {string} url   Original cover URL.
  * @param {number} width Target width in px (height auto, aspect kept).
@@ -26,6 +33,17 @@ export function coverUrl(url, width = 300) {
     if (!url) return "";
     // Already-relative / same-origin assets don't need proxying.
     if (!/^https?:\/\//i.test(url)) return url;
+
+    // Skip proxying for hosts wsrv.nl blocks — return the original URL.
+    try {
+        const host = new URL(url).hostname.toLowerCase();
+        if (COVER_PROXY_BLOCKLIST.some(blocked => host === blocked || host.endsWith(`.${blocked}`))) {
+            return url;
+        }
+    } catch {
+        return url; // malformed URL — don't risk proxying
+    }
+
     const params = new URLSearchParams({
         url,
         w: String(width),

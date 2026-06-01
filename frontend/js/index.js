@@ -1,7 +1,7 @@
 import { db } from "./firebase-config.js";
 import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { initAuthUi } from "./auth-ui.js?v=9";
-import { applyRatingStats, normalizeBook, escapeHtml, bookUrl, coverUrl } from "./common.js?v=13";
+import { applyRatingStats, normalizeBook, escapeHtml, bookUrl, coverUrl } from "./common.js?v=14";
 import { loadFavoriteIds, toggleFavorite } from "./favorites.js?v=9";
 
 const homeStatus = document.getElementById("home-status");

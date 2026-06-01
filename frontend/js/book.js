@@ -11,7 +11,7 @@ import {
     where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { initAuthUi } from "./auth-ui.js?v=9";
-import { BACKEND_URL, applyRatingStats, bookUrl, coverUrl, escapeHtml, getBookIdFromLocation } from "./common.js?v=13";
+import { BACKEND_URL, applyRatingStats, bookUrl, coverUrl, escapeHtml, getBookIdFromLocation } from "./common.js?v=14";
 import { loadFavoriteIds, toggleFavorite } from "./favorites.js?v=9";
 
 const bookStatus = document.getElementById("book-status");
