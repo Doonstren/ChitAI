@@ -3,71 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ЧитAI — профіль</title>
+    <title>ЧитAI — Профіль</title>
     <link rel="icon" type="image/svg+xml" href="/assets/Favicon.svg">
-    <link rel="stylesheet" href="/css/main.css?v=11">
+    <link rel="stylesheet" href="/css/tokens.css?v=2">
+    <link rel="stylesheet" href="/css/kit.css?v=31">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Light:opsz,wght,FILL,GRAD@24,300,0,0&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap">
     <meta name="robots" content="noindex, nofollow">
 </head>
 <body>
-    <nav class="site-nav">
-        <a href="/">Головна</a>
-        <a href="/catalog">Каталог</a>
-        <a href="/about">Про нас</a>
-        <a href="/help">Допомога</a>
-        <a href="/contacts">Контакти</a>
-        <a href="/chat">Нейробібліотекар</a>
-        <a class="profile-link" href="/profile">Профіль</a>
-    </nav>
+    <div class="app">
+        <header class="hdr">
+            <div class="hdr-in">
+                <a class="logo" href="/">ЧитAI</a>
+                <nav class="nav" aria-label="Головна навігація">
+                    <a href="/">Головна</a>
+                    <a href="/catalog">Каталог</a>
+                    <a href="/about">Про нас</a>
+                    <a href="/help">Допомога</a>
+                    <a href="/contacts">Контакти</a>
+                </nav>
+                <div class="hdr-sp"></div>
+                <a class="btn btn-primary hdr-ai" href="/chat">ЧитAI</a>
+                <form class="hdr-search" id="hdr-search">
+                    <input id="hdr-search-input" placeholder="Пошук…" aria-label="Пошук книг">
+                    <button type="submit">Знайти</button>
+                </form>
+                <a class="btn btn-teal hdr-login auth-link-pending active" href="/profile">Профіль</a>
+                <button class="btn btn-teal theme-toggle" type="button" title="Темна тема — скоро" aria-label="Перемкнути тему">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+            </div>
+        </header>
 
-    <nav class="breadcrumbs" aria-label="Хлібні крихти">
-        <a href="/">Головна</a>
-        <span>/</span>
-        <span>Профіль</span>
-    </nav>
+        <main class="page static-page">
+            <p id="profile-login-note" class="small text-center" style="margin-top: 48px;">
+                Для перегляду профілю, будь ласка, увійдіть у систему.<br>
+                <a href="/login" id="profile-login-link" style="color: var(--blue-900); text-decoration: underline;">Перейти до сторінки входу</a>
+            </p>
 
-    <h1>Профіль</h1>
+            <section id="profile-content" class="profile-page hidden">
+                <div class="profile-top">
+                    <p class="small crumbs-inline"><a href="/">Головна</a> » Профіль</p>
+                    <div class="profile-top-row">
+                        <h1 id="profile-greeting" class="serif">Вітаємо, Ім’я користувача</h1>
+                        <button id="btn-logout" class="btn btn-danger" type="button">Вийти</button>
+                    </div>
+                    <a class="btn btn-primary profile-wishlist-link" href="/wishlist">Перейти до бажаного</a>
+                </div>
 
-    <section id="auth-section" class="auth-section" style="visibility: hidden; min-height: 40px;">
-        <div class="auth-controls">
-            <input type="text" id="nickname" placeholder="Нікнейм (для реєстрації)" style="display:none;">
-            <input type="email" id="email" placeholder="Email" style="display:none;">
-            <input type="password" id="password" placeholder="Пароль" style="display:none;">
-            <button id="btn-login" type="button" style="display:none;">Увійти</button>
-            <button id="btn-register" type="button" style="display:none;">Зареєструватися</button>
-            <button id="btn-logout" type="button" style="display:none;">Вийти</button>
-        </div>
-        <p id="auth-status">Завантаження...</p>
-    </section>
+                <div class="profile-layout">
+                    <div class="profile-settings">
+                        <div class="profile-panel">
+                            <h2 class="serif">Зміна Імені користувача</h2>
+                            <p id="profile-name-status" class="profile-form-status" aria-live="polite"></p>
+                            <div style="margin-top: 16px;">
+                                <label class="h3">Нове Ім’я:</label>
+                                <div class="contact-field" style="margin-top: 8px;">
+                                    <input type="text" id="profile-input-name" placeholder="Введіть нове ім'я">
+                                </div>
+                                <small class="field-error" id="profile-input-name-error"></small>
+                            </div>
+                            <button class="btn btn-primary" style="margin-top: 24px; width: 127px;" id="profile-btn-name">Змінити</button>
+                        </div>
 
-    <main id="profile-content" class="hidden">
-        <p id="profile-email"></p>
+                        <div class="profile-panel">
+                            <h2 class="serif">Зміна пошти</h2>
+                            <p id="profile-email-status" class="profile-form-status" aria-live="polite"></p>
+                            <div style="margin-top: 16px;">
+                                <label class="h3">Ваш Email:</label>
+                                <div id="profile-current-email" style="margin-top: 4px; font: var(--t-body);">email@email.com</div>
+                            </div>
+                            <div style="margin-top: 16px;">
+                                <label class="h3">Email:</label>
+                                <div class="contact-field" style="margin-top: 8px;">
+                                    <input type="email" id="profile-input-email" placeholder="Введіть новий email">
+                                </div>
+                                <small class="field-error" id="profile-input-email-error"></small>
+                            </div>
+                            <button class="btn btn-primary" style="margin-top: 24px; width: 127px;" id="profile-btn-email">Змінити</button>
+                        </div>
 
-        <section>
-            <h2>Вибрані книги</h2>
-            <p id="favorites-status">Завантаження...</p>
-            <div id="favorite-books" class="profile-favorites"></div>
-        </section>
+                        <div class="profile-panel">
+                            <h2 class="serif">Зміна пароля</h2>
+                            <p id="profile-password-status" class="profile-form-status" aria-live="polite"></p>
+                            <div style="margin-top: 16px;">
+                                <label class="h3">Старий пароль:</label>
+                                <div class="contact-field" style="margin-top: 8px;">
+                                    <input type="password" id="profile-input-old-pass" placeholder="Введіть старий пароль">
+                                </div>
+                                <small class="field-error" id="profile-input-old-pass-error"></small>
+                            </div>
+                            <div style="margin-top: 16px;">
+                                <label class="h3">Новий пароль:</label>
+                                <div class="contact-field" style="margin-top: 8px;">
+                                    <input type="password" id="profile-input-new-pass" placeholder="Введіть новий пароль">
+                                </div>
+                                <small class="field-error" id="profile-input-new-pass-error"></small>
+                            </div>
+                            <div style="margin-top: 16px;">
+                                <label class="h3">Підтвердіть пароль:</label>
+                                <div class="contact-field" style="margin-top: 8px;">
+                                    <input type="password" id="profile-input-confirm-pass" placeholder="Підтвердіть пароль">
+                                </div>
+                                <small class="field-error" id="profile-input-confirm-pass-error"></small>
+                            </div>
+                            <button class="btn btn-primary" style="margin-top: 24px; width: 127px;" id="profile-btn-pass">Змінити</button>
+                        </div>
+                    </div>
 
-        <section>
-            <h2>Історія чату</h2>
-            <p id="threads-status">Завантаження...</p>
-            <div id="profile-thread-list" class="chat-thread-list"></div>
-        </section>
+                    <div class="profile-reviews">
+                        <div class="profile-panel profile-reviews-panel">
+                            <h2 class="serif">Ваші відгуки</h2>
+                            <p id="reviews-status" class="small" style="color: var(--green-700); margin-bottom: 16px;"></p>
+                            <div id="profile-reviews-list" style="display: flex; flex-direction: column; gap: 16px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
 
-        <section>
-            <h2>Мої відгуки</h2>
-            <p id="reviews-status">Завантаження...</p>
-            <div id="profile-reviews-list" class="comments-list"></div>
-        </section>
-    </main>
-
-    <p id="profile-login-note">Увійдіть, щоб переглянути профіль.</p>
-
-    <footer class="site-footer">
-        <p>ЧитAI — курсова робота студентів групи ММТЕ-11.</p>
-    </footer>
+        <footer class="ftr">
+            <div class="ftr-in">
+                <p>© 2025 ТОВ "Освітній Простір". Всі права захищено.</p>
+                <p><a href="/help">Політика конфіденційності</a> | <a href="/about">Про нас</a> | <a href="/contacts">Контакти</a></p>
+            </div>
+        </footer>
+    </div>
 
     <script type="module" src="/js/firebase-config.js?v=9"></script>
-    <script type="module" src="/js/profile.js?v=9"></script>
+    <script type="module" src="/js/auth-ui.js?v=11"></script>
+    <script type="module" src="/js/profile.js?v=17"></script>
 </body>
 </html>
+
+

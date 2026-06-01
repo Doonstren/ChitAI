@@ -36,5 +36,8 @@ export async function toggleFavorite(user, bookId, active) {
 
 export function updateFavoriteButton(button, active) {
     button.dataset.active = active ? "true" : "false";
-    button.textContent = active ? "♥ У вибраному" : "♡ До вибраного";
+    const icon = button.querySelector(".material-symbols-outlined");
+    if (icon) icon.textContent = active ? "check_circle" : "add_circle";
+    button.style.color = active ? "var(--orange)" : "";
+    button.title = active ? "У вибраному" : "До вибраного";
 }

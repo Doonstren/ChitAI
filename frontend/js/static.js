@@ -9,6 +9,7 @@ initAuthUi((user) => {
 
     if (user) {
         loginLink.textContent = "Профіль";
+        loginLink.href = "/profile";
         registerLink.style.display = "none";
         revealAuthLinks();
         return;
@@ -16,7 +17,8 @@ initAuthUi((user) => {
 
     loginLink.textContent = "Вхід";
     registerLink.textContent = "Реєстрація";
-    registerLink.href = "/profile";
+    loginLink.href = "/login";
+    registerLink.href = "/login#register";
     registerLink.style.display = "";
     revealAuthLinks();
 });
@@ -74,3 +76,4 @@ function revealAuthLinks() {
     loginLink?.classList.remove("auth-link-pending");
     registerLink?.classList.remove("auth-link-pending");
 }
+

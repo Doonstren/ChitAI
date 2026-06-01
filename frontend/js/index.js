@@ -1,7 +1,7 @@
 import { db } from "./firebase-config.js";
 import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { initAuthUi } from "./auth-ui.js?v=9";
-import { applyRatingStats, normalizeBook, escapeHtml, bookUrl } from "./common.js?v=10";
+import { applyRatingStats, normalizeBook, escapeHtml, bookUrl, coverUrl } from "./common.js?v=13";
 import { loadFavoriteIds, toggleFavorite } from "./favorites.js?v=9";
 
 const homeStatus = document.getElementById("home-status");
@@ -25,12 +25,14 @@ function updateHeaderAuth(user) {
 
     if (user) {
         loginLink.textContent = "Профіль";
+        loginLink.href = "/profile";
         registerLink.style.display = "none";
         revealAuthLinks();
     } else {
         loginLink.textContent = "Вхід";
         registerLink.textContent = "Реєстрація";
-        registerLink.href = "/profile";
+        loginLink.href = "/login";
+        registerLink.href = "/login#register";
         registerLink.style.display = "";
         revealAuthLinks();
     }
@@ -53,7 +55,7 @@ function renderCard(book, favIds) {
     const fav = favIds.has(id);
 
     const cover = book.cover_url
-        ? `<a class="cover" href="${bookUrl(id)}" draggable="false" style="background-image:url('${escapeHtml(book.cover_url)}')"></a>`
+        ? `<a class="cover" href="${bookUrl(id)}" draggable="false" style="background-image:url('${escapeHtml(coverUrl(book.cover_url, 300))}')"></a>`
         : `<a class="cover" href="${bookUrl(id)}" draggable="false"><div class="cover-gen"><div class="ct serif">${escapeHtml(title)}</div><div class="ca">${escapeHtml(author)}</div></div></a>`;
 
     const tags = genres.map(g => `<span class="tag">${escapeHtml(g)}</span>`).join("");
@@ -192,3 +194,4 @@ function renderHomeBooks() {
     homeStatus.textContent = "";
     homeBooks.innerHTML = cachedBooks.slice(0, 12).map(book => renderCard(book, favoriteIds)).join("");
 }
+

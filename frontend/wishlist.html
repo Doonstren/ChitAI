@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ЧитAI — каталог</title>
+    <title>ЧитAI — бажане</title>
     <link rel="icon" type="image/svg+xml" href="/assets/Favicon.svg">
     <link rel="stylesheet" href="/css/tokens.css?v=2">
     <link rel="stylesheet" href="/css/kit.css?v=31">
@@ -17,7 +17,7 @@
                 <a class="logo" href="/">ЧитAI</a>
                 <nav class="nav" aria-label="Головна навігація">
                     <a href="/">Головна</a>
-                    <a class="active" href="/catalog">Каталог</a>
+                    <a href="/catalog">Каталог</a>
                     <a href="/about">Про нас</a>
                     <a href="/help">Допомога</a>
                     <a href="/contacts">Контакти</a>
@@ -35,40 +35,20 @@
                 </button>
             </div>
         </header>
-        <script>
-            (() => {
-                try {
-                    const login = document.querySelector(".hdr-login");
-                    const register = document.querySelector(".hdr-register");
-                    if (!login || !register) return;
-                    if (localStorage.getItem("isLoggedIn") === "true") {
-                        login.textContent = "Профіль";
-                        register.style.display = "none";
-                    } else {
-                        login.textContent = "Вхід";
-                        register.textContent = "Реєстрація";
-                        register.style.display = "";
-                    }
-                    login.classList.remove("auth-link-pending");
-                    register.classList.remove("auth-link-pending");
-                } catch (error) {
-                    document.querySelector(".hdr-login")?.classList.remove("auth-link-pending");
-                    document.querySelector(".hdr-register")?.classList.remove("auth-link-pending");
-                }
-            })();
-        </script>
 
-        <main class="page catalog-page">
+        <main class="page catalog-page wishlist-page">
             <nav class="crumbs" aria-label="Хлібні крихти">
                 <a href="/">Головна</a>
                 <span>»</span>
-                <b>Каталог</b>
+                <a href="/profile">Профіль</a>
+                <span>»</span>
+                <b>Бажане</b>
             </nav>
 
             <div class="catalog-toolbar">
                 <div>
-                    <h1 class="catalog-title serif">Каталог книг</h1>
-                    <p id="catalog-status" class="catalog-status">Завантаження каталогу…</p>
+                    <h1 class="catalog-title serif">Бажане</h1>
+                    <p id="wishlist-status" class="catalog-status">Завантаження бажаного…</p>
                 </div>
                 <div class="sort-row" aria-label="Сортування">
                     <button class="sort-btn active" type="button" data-sort="popularity">За Популярністю</button>
@@ -80,32 +60,32 @@
             </div>
 
             <div class="catalog-shell">
-                <aside class="catalog-filters" aria-label="Фільтри каталогу">
+                <aside class="catalog-filters" aria-label="Фільтри бажаного">
                     <h2 class="catalog-filter-title serif">Фільтри</h2>
 
                     <div class="label">Жанри</div>
-                    <div id="genre-filter" class="filter-checks"></div>
+                    <div id="wishlist-genre-filter" class="filter-checks"></div>
 
-                    <label class="label" for="catalog-search">Автор</label>
-                    <input class="field" type="search" id="catalog-search" placeholder="Пошук...">
-                    <button id="find-filters" type="button" class="btn btn-primary btn-block">Знайти</button>
+                    <label class="label" for="wishlist-search">Автор</label>
+                    <input class="field" type="search" id="wishlist-search" placeholder="Пошук...">
+                    <button id="wishlist-find-filters" type="button" class="btn btn-primary btn-block">Знайти</button>
 
                     <div class="label">Рік видання</div>
-                    <div class="range2" id="year-range">
+                    <div class="range2" id="wishlist-year-range">
                         <div class="track"></div>
-                        <div class="fill" id="year-range-fill"></div>
-                        <input id="year-min-filter" type="range" min="0" max="0" value="0" aria-label="Мінімальний рік">
-                        <input id="year-max-filter" type="range" min="0" max="0" value="0" aria-label="Максимальний рік">
+                        <div class="fill" id="wishlist-year-range-fill"></div>
+                        <input id="wishlist-year-min-filter" type="range" min="0" max="0" value="0" aria-label="Мінімальний рік">
+                        <input id="wishlist-year-max-filter" type="range" min="0" max="0" value="0" aria-label="Максимальний рік">
                     </div>
-                    <div class="range-vals"><span id="year-min-label">—</span><span id="year-max-label">—</span></div>
+                    <div class="range-vals"><span id="wishlist-year-min-label">—</span><span id="wishlist-year-max-label">—</span></div>
 
-                    <button id="apply-filters" type="button" class="btn btn-primary btn-block">Застосувати</button>
-                    <button id="reset-filters" type="button" class="btn btn-secondary btn-block">Скинути</button>
+                    <button id="wishlist-apply-filters" type="button" class="btn btn-primary btn-block">Застосувати</button>
+                    <button id="wishlist-reset-filters" type="button" class="btn btn-secondary btn-block">Скинути</button>
                 </aside>
 
-                <section class="catalog-results" aria-label="Книги">
-                    <div id="catalog-books" class="catalog-grid"></div>
-                    <nav id="catalog-pagination" class="pager catalog-pager" aria-label="Сторінки каталогу"></nav>
+                <section class="catalog-results wishlist-results" aria-label="Бажані книги">
+                    <div id="wishlist-books" class="catalog-grid"></div>
+                    <nav id="wishlist-pagination" class="pager catalog-pager" aria-label="Сторінки бажаного"></nav>
                 </section>
             </div>
         </main>
@@ -121,8 +101,6 @@
     </div>
 
     <script type="module" src="/js/firebase-config.js?v=9"></script>
-    <script type="module" src="/js/catalog.js?v=17"></script>
+    <script type="module" src="/js/wishlist.js?v=4"></script>
 </body>
 </html>
-
-

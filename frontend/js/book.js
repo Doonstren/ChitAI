@@ -11,21 +11,23 @@ import {
     where,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { initAuthUi } from "./auth-ui.js?v=9";
-import { BACKEND_URL, applyRatingStats, bookUrl, escapeHtml, getBookIdFromLocation } from "./common.js?v=10";
+import { BACKEND_URL, applyRatingStats, bookUrl, coverUrl, escapeHtml, getBookIdFromLocation } from "./common.js?v=13";
 import { loadFavoriteIds, toggleFavorite } from "./favorites.js?v=9";
 
 const bookStatus = document.getElementById("book-status");
 const bookDetail = document.getElementById("book-detail");
 const relatedStatus = document.getElementById("related-status");
 const relatedBooks = document.getElementById("related-books");
+const relatedPrev = document.getElementById("related-prev");
+const relatedNext = document.getElementById("related-next");
 const commentsTitle = document.getElementById("comments-title");
 const commentsStatus = document.getElementById("comments-status");
 const commentsList = document.getElementById("comments-list");
 const commentForm = document.getElementById("comment-form");
 const commentLoginNote = document.getElementById("comment-login-note");
-const commentName = document.getElementById("comment-name");
 const commentRating = document.getElementById("comment-rating");
 const commentText = document.getElementById("comment-text");
+const commentTextError = document.getElementById("comment-text-error");
 const commentStars = document.getElementById("comment-stars");
 const bookBreadcrumbCurrent = document.getElementById("book-breadcrumb-current");
 const loginLink = document.querySelector(".hdr-login");
@@ -36,16 +38,22 @@ let currentUser = null;
 let currentBook = null;
 let favoriteIds = new Set();
 let userCommentDocId = null;
+let editingCommentId = null;
+let loadedComments = [];
+let relatedDrag = null;
+let relatedCanSwipe = false;
+let relatedSuppressClick = false;
+let relatedPointerStartedOnInteractive = false;
 
 initAuthUi(async (user) => {
     currentUser = user;
+    if (currentUser) {
+        currentUser.customDisplayName = await resolveUserDisplayName(currentUser);
+    }
     updateHeaderAuth(user);
     favoriteIds = await loadFavoriteIds(user);
     commentForm.classList.toggle("hidden", !user);
     commentLoginNote.classList.toggle("hidden", Boolean(user));
-    if (user && commentName && !commentName.value) {
-        commentName.value = user.customDisplayName || user.displayName || "";
-    }
     if (currentBook) renderBook(currentBook);
     if (currentBook) await loadRelatedBooks(currentBook);
     await loadComments();
@@ -74,6 +82,49 @@ relatedBooks.addEventListener("click", async (event) => {
     setRelatedFavoriteButton(button, nextActive);
 });
 
+relatedBooks.addEventListener("pointerdown", (event) => {
+    if (!relatedCanSwipe || event.button !== 0) return;
+    relatedPointerStartedOnInteractive = Boolean(event.target.closest("a,button"));
+    relatedDrag = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        scrollLeft: relatedBooks.scrollLeft,
+        moved: false,
+    };
+});
+
+window.addEventListener("pointermove", (event) => {
+    if (!relatedDrag || event.pointerId !== relatedDrag.pointerId) return;
+    const delta = event.clientX - relatedDrag.startX;
+    if (Math.abs(delta) > 6) {
+        relatedDrag.moved = true;
+        relatedSuppressClick = true;
+        relatedBooks.classList.add("is-dragging");
+        if (relatedPointerStartedOnInteractive) {
+            event.preventDefault();
+        }
+    }
+    if (!relatedDrag.moved) return;
+    event.preventDefault();
+    relatedBooks.scrollLeft = relatedDrag.scrollLeft - delta;
+});
+
+function endRelatedDrag(event) {
+    if (!relatedDrag || event.pointerId !== relatedDrag.pointerId) return;
+    relatedBooks.classList.remove("is-dragging");
+    relatedDrag = null;
+}
+
+window.addEventListener("pointerup", endRelatedDrag);
+window.addEventListener("pointercancel", endRelatedDrag);
+
+relatedBooks.addEventListener("click", (event) => {
+    if (!relatedSuppressClick) return;
+    event.preventDefault();
+    event.stopPropagation();
+    relatedSuppressClick = false;
+}, true);
+
 commentStars.addEventListener("click", (event) => {
     const button = event.target.closest("[data-rating]");
     if (!button) return;
@@ -81,26 +132,31 @@ commentStars.addEventListener("click", (event) => {
     renderStarInput(Number(commentRating.value));
 });
 
+commentText.addEventListener("input", () => {
+    if (commentText.value.trim()) showCommentTextError("");
+});
+
 commentForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!currentUser || !bookId) return;
 
     const text = commentText.value.trim();
-    if (!text) return;
-
-    if (userCommentDocId) {
-        alert("Ви вже залишили відгук. Спочатку видаліть старий, якщо хочете написати новий.");
+    if (!text) {
+        showCommentTextError("Напишіть відгук перед публікацією.");
         return;
     }
+    showCommentTextError("");
 
     const rating = Number(commentRating.value);
-    const displayName = commentName.value.trim()
-        || currentUser.customDisplayName
+    const displayName = currentUser.customDisplayName
         || currentUser.displayName
         || currentUser.email
         || "Користувач";
 
     try {
+        if (editingCommentId) {
+            await deleteDoc(doc(db, "comments", editingCommentId));
+        }
         await addDoc(collection(db, "comments"), {
             bookId,
             userId: currentUser.uid,
@@ -111,6 +167,8 @@ commentForm.addEventListener("submit", async (event) => {
         });
 
         commentText.value = "";
+        editingCommentId = null;
+        updateSubmitLabel();
         await loadComments();
     } catch (error) {
         alert("Помилка при додаванні відгуку: " + error.message);
@@ -119,6 +177,12 @@ commentForm.addEventListener("submit", async (event) => {
 });
 
 commentsList.addEventListener("click", async (event) => {
+    const editBtn = event.target.closest(".btn-edit-comment");
+    if (editBtn) {
+        startEditComment(editBtn.dataset.id);
+        return;
+    }
+
     const deleteBtn = event.target.closest(".btn-delete-comment");
     if (!deleteBtn) return;
 
@@ -127,10 +191,10 @@ commentsList.addEventListener("click", async (event) => {
     }
 });
 
-document.getElementById("related-prev")?.addEventListener("click", () => {
+relatedPrev?.addEventListener("click", () => {
     relatedBooks.scrollBy({ left: -460, behavior: "smooth" });
 });
-document.getElementById("related-next")?.addEventListener("click", () => {
+relatedNext?.addEventListener("click", () => {
     relatedBooks.scrollBy({ left: 460, behavior: "smooth" });
 });
 
@@ -168,13 +232,12 @@ function renderBook(book) {
     const ratingCount = Number(book.ratingCount || 0);
     const ratingSum = Number(book.ratingSum || 0);
     const average = ratingCount > 0 ? ratingSum / ratingCount : 0;
-    const ratingText = ratingCount > 0 ? `${average.toFixed(1)}/5 (${ratingCount} голосів)` : "Оцінок поки немає";
+    const ratingText = ratingCount > 0 ? `${average.toFixed(1)}/5 (${ratingCount} ${voteWord(ratingCount)})` : "Оцінок поки немає";
     const publicationYear = book.publication_year || extractYear(book.publication_date) || "—";
-    const language = book.language || "—";
-    const publisher = book.publisher || "—";
-    const pageCount = book.page_count || book.pages || book.num_pages || "—";
+    const seriesText = formatSeries(book);
+    const license = book.license || book.rights_status || "";
     const cover = book.cover_url
-        ? `<img class="book-hero-cover" src="${escapeHtml(book.cover_url)}" alt="${escapeHtml(title)}">`
+        ? `<img class="book-hero-cover" src="${escapeHtml(coverUrl(book.cover_url, 500))}" alt="${escapeHtml(title)}">`
         : `<div class="book-hero-cover book-cover-empty">Без обкладинки</div>`;
 
     bookDetail.innerHTML = `
@@ -182,7 +245,7 @@ function renderBook(book) {
             ${cover}
             <div class="book-actions">
                 <button id="btn-read-book" class="btn btn-primary" type="button">Читати онлайн</button>
-                <button id="btn-download-book" class="btn btn-secondary" type="button">Завантажити PDF</button>
+                <button id="btn-download-book" class="btn btn-secondary" type="button">Завантажити</button>
             </div>
         </aside>
         <section class="book-hero-info">
@@ -193,10 +256,9 @@ function renderBook(book) {
                 <strong>Жанр:</strong>
                 <div class="book-tags">${genres.map(genre => `<span class="tag">${escapeHtml(genre)}</span>`).join("") || "—"}</div>
             </div>
-            ${bookRow("Видавництво:", publisher)}
+            ${seriesText ? bookRow("Серія:", seriesText) : ""}
             ${bookRow("Рік видання:", publicationYear)}
-            ${bookRow("Мова видання:", language)}
-            ${bookRow("К-сть сторінок:", pageCount)}
+            ${license ? bookRow("Ліцензія:", license) : ""}
             <h2 class="serif">Анотація</h2>
             <p class="book-description">${escapeHtml(book.description || "Анотація для цієї книги поки не додана.")}</p>
         </section>
@@ -225,27 +287,45 @@ async function loadRelatedBooks(book) {
             commentsSnapshot.docs.map(item => item.data())
         );
         const currentGenres = new Set(Array.isArray(book.genres) ? book.genres : []);
+        const currentSeries = normalizeText(book.series);
         const related = books
             .filter(item => item.book_id !== book.book_id)
             .map(item => ({
                 ...item,
                 score: Array.isArray(item.genres) ? item.genres.filter(genre => currentGenres.has(genre)).length : 0,
+                sameSeries: Boolean(currentSeries && normalizeText(item.series) === currentSeries),
             }))
-            .sort((a, b) => b.score - a.score || String(a.title || "").localeCompare(String(b.title || ""), "uk"))
+            .filter(item => item.sameSeries || item.score > 0)
+            .sort((a, b) => Number(b.sameSeries) - Number(a.sameSeries) || b.score - a.score || String(a.title || "").localeCompare(String(b.title || ""), "uk"))
             .slice(0, 12);
 
         if (!related.length) {
-            relatedStatus.textContent = "Схожих книг поки немає.";
+            relatedStatus.textContent = "Схожих книг зі спільною серією або жанрами поки немає.";
             relatedBooks.innerHTML = "";
+            setRelatedNavVisible(false);
             return;
         }
 
         relatedStatus.textContent = "";
         relatedBooks.innerHTML = related.map(renderRelatedCard).join("");
+        setRelatedNavVisible(related.length > 5);
     } catch (error) {
         relatedStatus.textContent = "Не вдалося завантажити схожі книги.";
+        setRelatedNavVisible(false);
         console.error(error);
     }
+}
+
+function setRelatedNavVisible(visible) {
+    relatedCanSwipe = visible;
+    if (!visible) {
+        relatedBooks.classList.remove("is-dragging");
+        relatedSuppressClick = false;
+        relatedDrag = null;
+    }
+    relatedBooks.classList.toggle("can-swipe", visible);
+    relatedPrev?.classList.toggle("hidden", !visible);
+    relatedNext?.classList.toggle("hidden", !visible);
 }
 
 function renderRelatedCard(book) {
@@ -257,7 +337,7 @@ function renderRelatedCard(book) {
     const rating = count > 0 ? (Number(book.ratingSum || 0) / count).toFixed(1) : "—";
     const fav = favoriteIds.has(id);
     const cover = book.cover_url
-        ? `<a class="cover" href="${bookUrl(id)}" draggable="false" style="background-image:url('${escapeHtml(book.cover_url)}')"></a>`
+        ? `<a class="cover" href="${bookUrl(id)}" draggable="false" style="background-image:url('${escapeHtml(coverUrl(book.cover_url, 300))}')"></a>`
         : `<a class="cover" href="${bookUrl(id)}" draggable="false"><div class="cover-gen"><div class="ct serif">${escapeHtml(title)}</div><div class="ca">${escapeHtml(author)}</div></div></a>`;
 
     return `
@@ -284,6 +364,7 @@ async function loadComments() {
     commentsStatus.textContent = "Завантаження відгуків...";
     commentsList.innerHTML = "";
     userCommentDocId = null;
+    loadedComments = [];
 
     try {
         const commentsQuery = query(collection(db, "comments"), where("bookId", "==", bookId));
@@ -291,6 +372,7 @@ async function loadComments() {
         const comments = snapshot.docs
             .map(item => ({ id: item.id, ...item.data() }))
             .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+        loadedComments = comments;
 
         const ratingStats = comments.reduce((stats, comment) => {
             const rating = Number(comment.rating || 0);
@@ -327,44 +409,83 @@ function updateCommentFormState(comments) {
     if (!currentUser) return;
 
     const userComment = comments.find(comment => comment.userId === currentUser.uid);
-    if (userComment) {
+    if (userComment && editingCommentId !== userComment.id) {
         userCommentDocId = userComment.id;
         commentForm.style.display = "none";
         const message = document.createElement("p");
         message.id = "already-commented-note";
         message.className = "book-muted";
-        message.textContent = "Ви вже залишили відгук до цієї книги.";
+        message.textContent = "Ви вже залишили відгук до цієї книги. Його можна відредагувати нижче.";
         commentForm.parentNode.insertBefore(message, commentForm);
         return;
     }
 
     commentForm.style.display = "flex";
+    updateSubmitLabel();
 }
 
 function renderComment(comment) {
     const isMine = currentUser && comment.userId === currentUser.uid;
     const rating = Number(comment.rating || 0);
     const date = formatDate(comment.createdAt);
+    const userName = isMine
+        ? (currentUser.customDisplayName || currentUser.displayName || comment.userName || "Користувач")
+        : (comment.userName || "Користувач");
 
     return `
-        <article class="review-card">
+        <article class="review-card" data-comment-id="${escapeHtml(comment.id)}">
             <header>
-                <div><strong>${escapeHtml(comment.userName || "Користувач")}</strong><span>пише:</span></div>
+                <div><strong>${escapeHtml(userName)}</strong><span>пише:</span></div>
                 <time>${escapeHtml(date)}</time>
             </header>
             <p>${escapeHtml(comment.text || "")}</p>
             <footer>
                 <strong>Оцінка:</strong>
                 <span class="review-stars">${renderStars(rating)}</span>
-                ${isMine ? `<button class="btn-delete-comment" type="button" data-id="${escapeHtml(comment.id)}">Видалити</button>` : ""}
+                ${isMine ? `<button class="btn-edit-comment" type="button" data-id="${escapeHtml(comment.id)}">Редагувати</button><button class="btn-delete-comment" type="button" data-id="${escapeHtml(comment.id)}">Видалити</button>` : ""}
             </footer>
         </article>
     `;
 }
 
+function startEditComment(commentId) {
+    const comment = loadedComments.find(item => item.id === commentId);
+    if (!comment || !currentUser || comment.userId !== currentUser.uid) return;
+
+    document.getElementById("already-commented-note")?.remove();
+    editingCommentId = commentId;
+    commentsList.querySelectorAll(".review-card").forEach(card => {
+        card.classList.toggle("hidden", card.dataset.commentId === commentId);
+    });
+    commentText.value = comment.text || "";
+    commentRating.value = String(Math.max(1, Math.min(5, Number(comment.rating || 5))));
+    renderStarInput(Number(commentRating.value));
+    showCommentTextError("");
+    commentForm.classList.remove("hidden");
+    commentForm.style.display = "flex";
+    updateSubmitLabel();
+    commentForm.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function updateSubmitLabel() {
+    const submit = commentForm.querySelector(".review-submit");
+    if (submit) submit.textContent = editingCommentId ? "Оновити" : "Опублікувати";
+}
+
+function showCommentTextError(message) {
+    if (!commentText || !commentTextError) return;
+    commentText.classList.toggle("is-error", Boolean(message));
+    commentTextError.textContent = message;
+}
+
 async function deleteComment(commentId) {
     try {
         await deleteDoc(doc(db, "comments", commentId));
+        if (editingCommentId === commentId) {
+            editingCommentId = null;
+            commentText.value = "";
+            updateSubmitLabel();
+        }
         await loadComments();
     } catch (error) {
         alert("Помилка видалення: " + error.message);
@@ -392,6 +513,46 @@ function renderStars(rating) {
     )).join("");
 }
 
+function voteWord(count) {
+    const abs = Math.abs(Number(count));
+    const lastTwo = abs % 100;
+    const last = abs % 10;
+    if (lastTwo >= 11 && lastTwo <= 14) return "голосів";
+    if (last === 1) return "голос";
+    if (last >= 2 && last <= 4) return "голоси";
+    return "голосів";
+}
+
+function formatSeries(book) {
+    const series = String(book.series || "").trim();
+    if (!series) return "";
+    const number = String(book.series_number || "").trim();
+    return number ? `${series} #${number}` : series;
+}
+
+function normalizeText(value) {
+    return String(value || "").trim().toLocaleLowerCase("uk-UA");
+}
+
+async function resolveUserDisplayName(user) {
+    if (!user) return "";
+    if (user.customDisplayName && user.customDisplayName !== user.email) return user.customDisplayName;
+
+    try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const profileName = userDoc.exists() ? String(userDoc.data().displayName || "").trim() : "";
+        if (profileName) return profileName;
+    } catch (error) {
+        console.warn("Could not load user displayName", error);
+    }
+
+    if (user.displayName && user.displayName !== user.email) return user.displayName;
+    const cachedUid = localStorage.getItem("profileDisplayNameUid");
+    const cachedName = localStorage.getItem("profileDisplayName");
+    if (cachedUid === user.uid && cachedName) return cachedName;
+    return user.email || "Користувач";
+}
+
 function formatDate(timestamp) {
     const date = timestamp?.toDate?.();
     if (!date) return "";
@@ -411,11 +572,13 @@ function updateHeaderAuth(user) {
     if (!loginLink || !registerLink) return;
     if (user) {
         loginLink.textContent = "Профіль";
+        loginLink.href = "/profile";
         registerLink.style.display = "none";
     } else {
         loginLink.textContent = "Вхід";
         registerLink.textContent = "Реєстрація";
-        registerLink.href = "/profile";
+        loginLink.href = "/login";
+        registerLink.href = "/login#register";
         registerLink.style.display = "";
     }
     loginLink.classList.remove("auth-link-pending");
@@ -480,3 +643,4 @@ function injectJsonLd(book) {
     script2.textContent = JSON.stringify(bookLd);
     document.head.appendChild(script2);
 }
+

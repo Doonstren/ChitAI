@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ЧитAI — Вхід</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/Favicon.svg">
+    <link rel="stylesheet" href="/css/tokens.css?v=2">
+    <link rel="stylesheet" href="/css/kit.css?v=31">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap">
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+    <div class="app">
+        <header class="hdr">
+            <div class="hdr-in">
+                <a class="logo" href="/">ЧитAI</a>
+                <nav class="nav" aria-label="Головна навігація">
+                    <a href="/">Головна</a>
+                    <a href="/catalog">Каталог</a>
+                    <a href="/about">Про нас</a>
+                    <a href="/help">Допомога</a>
+                    <a href="/contacts">Контакти</a>
+                </nav>
+                <div class="hdr-sp"></div>
+                <a class="btn btn-primary hdr-ai" href="/chat">ЧитAI</a>
+                <form class="hdr-search" id="hdr-search">
+                    <input id="hdr-search-input" placeholder="Пошук…" aria-label="Пошук книг">
+                    <button type="submit">Знайти</button>
+                </form>
+                <a class="btn btn-teal hdr-login active" href="/login">Вхід</a>
+                <a class="btn btn-teal hdr-register" href="/login#register">Реєстрація</a>
+                <button class="btn btn-teal theme-toggle" type="button" title="Темна тема — скоро" aria-label="Перемкнути тему">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="page static-page auth-page">
+            <nav class="crumbs" aria-label="Хлібні крихти">
+                <a href="/">Головна</a>
+                <span>»</span>
+                <b id="auth-crumb-current">Вхід</b>
+            </nav>
+
+            <div class="auth-toggle" aria-label="Перемикання входу та реєстрації">
+                <button id="show-login-tab" class="on" type="button">Вхід</button>
+                <button id="show-register-tab" type="button">Реєстрація</button>
+            </div>
+
+            <section class="auth-card" id="login-panel">
+                <h1 class="serif auth-title">Вхід до системи</h1>
+                <form id="login-form" class="auth-form" novalidate>
+                    <p id="login-error" class="form-status is-error" aria-live="polite"></p>
+                    <label class="form-field">
+                        <span>Email</span>
+                        <input type="email" id="login-email" placeholder="Ваш Email" autocomplete="email">
+                        <small class="field-error" id="login-email-error"></small>
+                    </label>
+                    <label class="form-field">
+                        <span>Пароль</span>
+                        <input type="password" id="login-password" placeholder="Ваш пароль" autocomplete="current-password">
+                        <small class="field-error" id="login-password-error"></small>
+                    </label>
+                    <button type="submit" class="btn btn-primary auth-submit">Вхід</button>
+                    <p class="small text-center">Ще не маєте акаунту? <a href="/login#register" id="show-register">Зареєструватися</a></p>
+                </form>
+            </section>
+
+            <section class="auth-card hidden" id="register-panel">
+                <h1 class="serif auth-title">Створення акаунту</h1>
+                <form id="register-form" class="auth-form" novalidate>
+                    <p id="register-error" class="form-status is-error" aria-live="polite"></p>
+                    <label class="form-field">
+                        <span>Ім’я</span>
+                        <input type="text" id="register-name" placeholder="Ім’я користувача" autocomplete="nickname">
+                        <small class="field-error" id="register-name-error"></small>
+                    </label>
+                    <label class="form-field">
+                        <span>Email</span>
+                        <input type="email" id="register-email" placeholder="Ваш Email" autocomplete="email">
+                        <small class="field-error" id="register-email-error"></small>
+                    </label>
+                    <label class="form-field">
+                        <span>Пароль</span>
+                        <input type="password" id="register-password" placeholder="Мінімум 6 символів" autocomplete="new-password">
+                        <small class="field-error" id="register-password-error"></small>
+                    </label>
+                    <label class="form-field">
+                        <span>Підтвердження паролю</span>
+                        <input type="password" id="register-password-confirm" placeholder="Повторіть пароль" autocomplete="new-password">
+                        <small class="field-error" id="register-password-confirm-error"></small>
+                    </label>
+                    <button type="submit" class="btn btn-primary auth-submit">Реєстрація</button>
+                    <p class="small text-center">Вже маєте акаунт? <a href="/login#login" id="show-login">Увійти</a></p>
+                </form>
+            </section>
+        </main>
+
+        <footer class="ftr">
+            <div class="ftr-in">
+                <p>© 2025 ТОВ "Освітній Простір". Всі права захищено.</p>
+                <p><a href="/help">Політика конфіденційності</a> | <a href="/about">Про нас</a> | <a href="/contacts">Контакти</a></p>
+            </div>
+        </footer>
+    </div>
+
+    <script type="module" src="/js/login.js?v=2"></script>
+</body>
+</html>
+
+

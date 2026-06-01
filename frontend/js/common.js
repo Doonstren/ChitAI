@@ -13,6 +13,29 @@ export function bookUrl(bookId) {
     return `/books/${encodeURIComponent(bookId)}`;
 }
 
+/**
+ * Proxy an external cover image through wsrv.nl to resize + convert to WebP.
+ * Covers are hot-linked from third-party sites, so we can't resize at source.
+ * wsrv.nl downloads, caches (CDN), resizes and re-encodes them on the fly.
+ *
+ * @param {string} url   Original cover URL.
+ * @param {number} width Target width in px (height auto, aspect kept).
+ * @returns {string} Optimised URL, or "" if no source url.
+ */
+export function coverUrl(url, width = 300) {
+    if (!url) return "";
+    // Already-relative / same-origin assets don't need proxying.
+    if (!/^https?:\/\//i.test(url)) return url;
+    const params = new URLSearchParams({
+        url,
+        w: String(width),
+        output: "webp",
+        q: "80",
+        we: "", // "without enlargement" — never upscale small covers
+    });
+    return `https://wsrv.nl/?${params.toString()}`;
+}
+
 export function getBookIdFromLocation() {
     const params = new URLSearchParams(window.location.search);
     const explicitId = params.get("id");
@@ -28,41 +51,41 @@ export function getBookIdFromLocation() {
 export function renderBookCard(book, favoriteIds = new Set()) {
     const bookId = book.book_id || "";
     const title = book.title || "Книга";
-    const genres = Array.isArray(book.genres) ? book.genres.join(", ") : "";
+    const author = book.author || "";
+    const genres = Array.isArray(book.genres) ? book.genres.slice(0, 4) : [];
     const publicationDate = book.publication_date || book.publication_year || "";
-    const series = book.series
-        ? `${book.series}${book.series_number ? " #" + book.series_number : ""}`
-        : "";
     const cover = book.cover_url
-        ? `<img class="book-card-cover" src="${escapeHtml(book.cover_url)}" alt="${escapeHtml(title)}">`
-        : `<div class="book-card-cover book-card-cover--empty">Без обкладинки</div>`;
+        ? `<a class="wide-cover" href="${bookUrl(bookId)}"><img src="${escapeHtml(coverUrl(book.cover_url, 372))}" alt="${escapeHtml(title)}" loading="lazy" width="186" height="292"></a>`
+        : `<a class="wide-cover wide-cover-empty" href="${bookUrl(bookId)}"><span>${escapeHtml(title)}</span></a>`;
     const favoriteActive = favoriteIds.has(bookId) ? "true" : "false";
-    const favoriteLabel = favoriteIds.has(bookId) ? "♥ У вибраному" : "♡ До вибраного";
-
+    const description = book.description || book.reason || book.recommendation || "";
     const ratingCount = Number(book.ratingCount || 0);
     const ratingSum = Number(book.ratingSum || 0);
-    const ratingHtml = renderStars(ratingCount > 0 ? ratingSum / ratingCount : 0, ratingCount);
+    const rating = ratingCount > 0 ? (ratingSum / ratingCount).toFixed(1) : "";
+    const ratingLine = rating ? `${rating}/5 (${pluralizeReviews(ratingCount)})` : "Оцінок поки немає";
 
     return `
-        <article class="book-card" data-book-id="${escapeHtml(bookId)}">
-            <a href="${bookUrl(bookId)}">${cover}</a>
-            <div class="book-card-body">
-                <h3><a href="${bookUrl(bookId)}">${escapeHtml(title)}</a></h3>
-                <p class="book-card-author">${escapeHtml(book.author || "")}</p>
-                <div class="book-card-meta">
-                    ${genres ? `<span>${escapeHtml(genres)}</span>` : ""}
-                    ${publicationDate ? `<span>${escapeHtml(publicationDate)}</span>` : ""}
-                    ${series ? `<span>${escapeHtml(series)}</span>` : ""}
+        <article class="bcard-wide" data-book-id="${escapeHtml(bookId)}">
+            ${cover}
+            <div class="bw-body">
+                <div class="bw-head">
+                    <h3><a href="${bookUrl(bookId)}">${escapeHtml(title)}</a></h3>
+                    <button class="addbtn favorite-toggle" type="button" data-book-id="${escapeHtml(bookId)}" data-active="${favoriteActive}" title="${favoriteActive === "true" ? "У вибраному" : "До вибраного"}" style="${favoriteActive === "true" ? "color:var(--orange)" : ""}">
+                        <span class="material-symbols-outlined">${favoriteActive === "true" ? "check_circle" : "add_circle"}</span>
+                    </button>
                 </div>
-                ${ratingHtml}
-                <p class="book-card-description">${escapeHtml(book.description || "")}</p>
-                <div class="card-actions">
-                    <a class="primary-button" href="${bookUrl(bookId)}">Відкрити</a>
-                    <button class="secondary-button favorite-toggle" type="button" data-book-id="${escapeHtml(bookId)}" data-active="${favoriteActive}">${favoriteLabel}</button>
+                <dl class="bw-meta">
+                    ${author ? `<div><dt>Автор:</dt><dd>${escapeHtml(author)}</dd></div>` : ""}
+                    ${genres.length ? `<div><dt>Жанр:</dt><dd class="bw-tags">${genres.map(genre => `<span class="tag">${escapeHtml(genre)}</span>`).join("")}</dd></div>` : ""}
+                    ${publicationDate ? `<div><dt>Рік видання:</dt><dd>${escapeHtml(publicationDate)}</dd></div>` : ""}
+                    <div><dt>Оцінка:</dt><dd>${escapeHtml(ratingLine)}</dd></div>
+                </dl>
+                <p class="bw-desc">${escapeHtml(description)}</p>
+                <div class="bw-cta">
+                    <a class="btn btn-primary" href="${bookUrl(bookId)}">Детальніше</a>
                 </div>
             </div>
-        </article>
-    `;
+        </article>`;
 }
 
 export function pluralizeReviews(count) {

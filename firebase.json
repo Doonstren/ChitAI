@@ -43,8 +43,20 @@
         "destination": "/chat.html"
       },
       {
+        "source": "/login",
+        "destination": "/login.html"
+      },
+      {
         "source": "/profile",
         "destination": "/profile.html"
+      },
+      {
+        "source": "/wishlist/page-**",
+        "destination": "/wishlist.html"
+      },
+      {
+        "source": "/wishlist",
+        "destination": "/wishlist.html"
       },
       {
         "source": "/books/**",

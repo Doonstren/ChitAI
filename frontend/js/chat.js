@@ -12,39 +12,49 @@ import {
     deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { initAuthUi } from "./auth-ui.js?v=9";
-import { BACKEND_URL, escapeHtml, renderBookCard } from "./common.js?v=9";
-import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=9";
+import { BACKEND_URL, escapeHtml, renderBookCard } from "./common.js?v=13";
+import { loadFavoriteIds, toggleFavorite, updateFavoriteButton } from "./favorites.js?v=10";
 
 const chatAuthNote = document.getElementById("chat-auth-note");
 const chatApp = document.getElementById("chat-app");
+const chatTitle = document.getElementById("chat-title");
 const threadList = document.getElementById("chat-thread-list");
 const btnNewThread = document.getElementById("btn-new-thread");
 const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const btnSend = document.getElementById("btn-send");
 const chatStatus = document.getElementById("chat-status");
+const loginLink = document.querySelector(".hdr-login");
+const registerLink = document.querySelector(".hdr-register");
 
 let currentUser = null;
 let currentThreadId = "";
 let currentMessages = [];
 let currentThreadTitle = "";
 let favoriteIds = new Set();
+let assistantPending = false;
+let currentDisplayName = "";
 
 initAuthUi(async (user) => {
     currentUser = user;
+    updateHeaderAuth(user);
     chatAuthNote.classList.toggle("hidden", Boolean(user));
     chatApp.classList.toggle("hidden", !user);
+    chatTitle?.classList.toggle("hidden", !user);
 
     if (!user) {
         currentThreadId = "";
         currentMessages = [];
         currentThreadTitle = "";
+        currentDisplayName = "";
         favoriteIds = new Set();
         renderMessages();
         threadList.innerHTML = "";
         return;
     }
 
+    currentDisplayName = await resolveChatDisplayName(user);
+    currentUser.customDisplayName = currentDisplayName;
     favoriteIds = await loadFavoriteIds(user);
     await loadThreads();
     const requestedThreadId = new URLSearchParams(window.location.search).get("thread");
@@ -57,8 +67,10 @@ btnNewThread.addEventListener("click", () => {
     currentThreadId = "";
     currentMessages = [];
     currentThreadTitle = "";
+    assistantPending = false;
     window.history.replaceState(null, "", `/chat`);
     renderMessages();
+    loadThreads();
 });
 
 threadList.addEventListener("click", async (event) => {
@@ -70,6 +82,7 @@ threadList.addEventListener("click", async (event) => {
             if (currentThreadId === threadId) {
                 currentThreadId = "";
                 currentMessages = [];
+                assistantPending = false;
                 window.history.replaceState(null, "", `/chat`);
                 renderMessages();
             }
@@ -110,16 +123,35 @@ async function loadThreads() {
     const threads = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
 
     if (!threads.length) {
-        threadList.innerHTML = "<p>Історія порожня.</p>";
+        threadList.innerHTML = "<p style='padding: 0 40px; color: var(--warm-gray);'>Історія порожня.</p>";
         return;
     }
 
     threadList.innerHTML = threads.map(thread => `
-        <article class="chat-thread" style="display: flex; gap: 8px;">
-            <button class="chat-thread-open secondary-button" style="flex:1; text-align: left;" type="button" data-thread-id="${escapeHtml(thread.id)}">${escapeHtml(thread.title || "Розмова")}</button>
-            <button class="chat-thread-delete secondary-button" type="button" data-thread-id="${escapeHtml(thread.id)}" title="Видалити">🗑️</button>
-        </article>
+        <div class="chat-thread-item ${thread.id === currentThreadId ? "active" : ""}">
+            <button class="chat-thread-open" type="button" data-thread-id="${escapeHtml(thread.id)}">
+                <span>${escapeHtml(thread.title || "Розмова")}</span>
+            </button>
+            <button class="chat-thread-delete material-symbols-outlined" type="button" data-thread-id="${escapeHtml(thread.id)}" title="Видалити" aria-label="Видалити чат">delete</button>
+        </div>
     `).join("");
+}
+
+function updateHeaderAuth(user) {
+    if (!loginLink || !registerLink) return;
+    if (user) {
+        loginLink.textContent = "Профіль";
+        loginLink.href = "/profile";
+        registerLink.style.display = "none";
+    } else {
+        loginLink.textContent = "Вхід";
+        loginLink.href = "/login";
+        registerLink.textContent = "Реєстрація";
+        registerLink.href = "/login#register";
+        registerLink.style.display = "";
+    }
+    loginLink.classList.remove("auth-link-pending");
+    registerLink.classList.remove("auth-link-pending");
 }
 
 async function createThread() {
@@ -150,6 +182,7 @@ async function openThread(threadId) {
     currentThreadTitle = snapshot.data().title || "";
     window.history.replaceState(null, "", `/chat?thread=${encodeURIComponent(currentThreadId)}`);
     renderMessages();
+    await loadThreads();
 }
 
 async function sendMessage() {
@@ -167,7 +200,7 @@ async function sendMessage() {
 
     chatInput.value = "";
     btnSend.disabled = true;
-    chatStatus.textContent = "Нейробібліотекар відповідає...";
+    chatStatus.textContent = "";
 
     // Останні репліки цього треда — щоб бот пам'ятав контекст розмови.
     // Для відповідей бота додаємо назви рекомендованих книг, інакше він
@@ -188,6 +221,7 @@ async function sendMessage() {
     const isFirstExchange = !currentMessages.some(item => item.role === "assistant");
 
     currentMessages.push({ role: "user", text: message });
+    assistantPending = true;
     renderMessages();
     await saveThread(message);
 
@@ -210,6 +244,7 @@ async function sendMessage() {
             text: data.answer || "",
             books: data.books || [],
         });
+        assistantPending = false;
         renderMessages();
         await saveThread(message);
         if (isFirstExchange) {
@@ -222,6 +257,7 @@ async function sendMessage() {
             role: "system",
             text: "Не вдалося отримати відповідь. Перевірте, що бекенд запущений.",
         });
+        assistantPending = false;
         renderMessages();
         await saveThread(message);
         chatStatus.textContent = "";
@@ -270,7 +306,13 @@ async function generateThreadTitle(firstMessage) {
 
 function renderMessages() {
     if (!currentMessages.length) {
-        chatMessages.innerHTML = "<p>Почніть нову розмову з нейробібліотекарем.</p>";
+        const name = currentDisplayName || "читачу";
+        chatMessages.innerHTML = `
+            <div class="chat-empty">
+                <h2 class="serif">${escapeHtml(name)}, задайте питання нашому нейробібліотекарю</h2>
+                <p>Опишіть настрій, жанр або ситуацію, а ЧитAI підбере книги з каталогу.</p>
+            </div>
+        `;
         return;
     }
 
@@ -278,13 +320,39 @@ function renderMessages() {
         const books = Array.isArray(message.books) && message.books.length
             ? `<div class="book-recommendations">${message.books.map(book => renderBookCard(book, favoriteIds)).join("")}</div>`
             : "";
+        const roleClass = message.role === "user" ? "user" : "ai";
+        const bubble = roleClass === "user"
+            ? `<div style="white-space: pre-wrap;">${escapeHtml(message.text || "")}</div>`
+            : `<div class="chat-bubble" style="white-space: pre-wrap;">${escapeHtml(message.text || "")}</div>`;
         return `
-            <article class="chat-message">
-                <strong>${message.role === "user" ? "Ви" : message.role === "assistant" ? "ЧитAI" : "Система"}</strong>
-                <p>${escapeHtml(message.text || "")}</p>
+            <div class="chat-msg ${roleClass}">
+                ${bubble}
                 ${books}
-            </article>
+            </div>
         `;
-    }).join("");
+    }).join("") + (assistantPending ? `
+        <div class="chat-msg ai pending">
+            <div class="chat-bubble">Нейробібліотекар відповідає...</div>
+        </div>
+    ` : "");
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function resolveChatDisplayName(user) {
+    if (!user) return "";
+    if (user.customDisplayName && user.customDisplayName !== user.email) return user.customDisplayName;
+
+    try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const profileName = userDoc.exists() ? String(userDoc.data().displayName || "").trim() : "";
+        if (profileName) return profileName;
+    } catch (error) {
+        console.warn("Could not load chat displayName", error);
+    }
+
+    if (user.displayName && user.displayName !== user.email) return user.displayName;
+    const cachedUid = localStorage.getItem("profileDisplayNameUid");
+    const cachedName = localStorage.getItem("profileDisplayName");
+    if (cachedUid === user.uid && cachedName) return cachedName;
+    return user.email || "читачу";
 }
